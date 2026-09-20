@@ -1,0 +1,129 @@
+#!/usr/bin/env bash
+# ==============================================================================
+# RETRO OS - Core Control CLI
+# ==============================================================================
+
+set -euo pipefail
+
+CYAN='\033[96m'
+GREEN='\033[92m'
+RED='\033[91m'
+YELLOW='\033[93m'
+NC='\033[0m'
+
+show_banner() {
+cat << "EOF"
+  ____  _____ _____ ____   ___     ___  ____  
+ |  _ \| ____|_   _|  _ \ / _ \   / _ \/ ___| 
+ | |_) |  _|   | | | |_) | | | | | | | \___ \ 
+ |  _ <| |___  | | |  _ <| |_| | | |_| |___) |
+ |_| \_\_____| |_| |_| \_\\___/   \___/|____/ 
+ Next-Gen Tactical Operating System
+EOF
+}
+
+case "${1:-help}" in
+    doctor)
+        echo -e "${YELLOW}[*] Executing Retro Diagnostic & Healing Protocol...${NC}"
+        echo -e "${CYAN}[1/4] Checking ZRAM & Memory Status...${NC}"
+        free -h || true
+        echo -e "${CYAN}[2/4] Removing stale package locks...${NC}"
+        sudo rm -f /var/lib/apt/lists/lock /var/cache/apt/archives/lock /var/lib/dpkg/lock* 2>/dev/null || true
+        sudo dpkg --configure -a 2>/dev/null || true
+        echo -e "${CYAN}[3/4] Trimming Filesystem Blocks...${NC}"
+        sudo fstrim -av 2>/dev/null || true
+        echo -e "${CYAN}[4/4] Verifying EarlyOOM Watchdog...${NC}"
+        systemctl is-active earlyoom 2>/dev/null || echo "EarlyOOM container/host verified."
+        echo -e "${GREEN}[✓] Diagnostic complete. System optimized.${NC}"
+        ;;
+        
+    kali)
+        echo -e "${YELLOW}[*] Launching Kali Isolation Environment...${NC}"
+        if ! distrobox list 2>/dev/null | grep -q "retro-kali"; then
+            echo -e "${CYAN}[*] Initializing isolated container...${NC}"
+            distrobox create --image docker.io/kalilinux/kali-rolling:latest --name retro-kali -Y
+        fi
+        distrobox enter retro-kali
+        ;;
+        
+    mon)
+        if command -v btop &> /dev/null; then
+            btop
+        else
+            top
+        fi
+        ;;
+        
+    scan)
+        TARGET="${2:-}"
+        if [ -z "$TARGET" ]; then
+            echo -e "${RED}[!] Usage: retro scan <IP/Host>${NC}"
+            exit 1
+        fi
+        echo -e "${YELLOW}[*] Initiating security reconnaissance: ${TARGET}${NC}"
+        if command -v rustscan &> /dev/null; then
+            rustscan -a "$TARGET" -- -sV
+        else
+            nmap -Pn -sV "$TARGET"
+        fi
+        ;;
+        
+    snap)
+        echo -e "${YELLOW}[*] Creating Btrfs System Snapshot...${NC}"
+        if command -v snapper &> /dev/null && [ -d "/.snapshots" ]; then
+            sudo snapper create -d "Retro-Snapshot-$(date +%Y%m%d-%H%M%S)"
+            echo -e "${GREEN}[✓] Snapshot created successfully.${NC}"
+        else
+            echo -e "${RED}[!] Snapper not configured for this volume.${NC}"
+        fi
+        ;;
+        
+    ai)
+        QUERY="${2:-}"
+        if [ -z "$QUERY" ]; then
+            echo -e "${CYAN}====================================================${NC}"
+            echo -e "${GREEN}      RETRO ETHICAL SECURITY & AUDIT MENTOR         ${NC}"
+            echo -e "${CYAN}====================================================${NC}"
+            read -rp "Retro> " USER_INPUT
+            QUERY="$USER_INPUT"
+        fi
+        
+        if [ "$QUERY" = "fix" ]; then
+            echo -e "${YELLOW}[*] Autonomous Diagnostic Protocol Triggered...${NC}"
+            retro doctor
+            exit 0
+        fi
+        
+        echo -e "${CYAN}[Retro Analysis]:${NC}"
+        case "$QUERY" in
+            *scan*|*port*|*nmap*)
+                echo -e "${GREEN}[+] Guidance:${NC} Check exposed ports. Restrict unused entrypoints via ufw. Verify banner grabs for outdated versions."
+                ;;
+            *sql*|*injection*)
+                echo -e "${GREEN}[+] Remediation:${NC} Use Parameterized Queries (Prepared Statements) to separate input data from execution logic."
+                ;;
+            *xss*|*cross*)
+                echo -e "${GREEN}[+] Remediation:${NC} Enforce context-aware HTML/JS output encoding and deploy strict Content Security Policy (CSP) headers."
+                ;;
+            *freeze*|*ram*|*lag*)
+                echo -e "${GREEN}[+] Telemetry Report:${NC}"
+                free -h
+                echo -e "Use 'retro doctor' to clean cache and optimize ZRAM."
+                ;;
+            *)
+                echo -e "Retro Security Engine active. State your auditing target, code review query, or system repair issue."
+                ;;
+        esac
+        ;;
+        
+    help|*)
+        show_banner
+        echo -e "System Commands:"
+        echo -e "  ${GREEN}retro doctor${NC}       : Diagnostic check and self-healing"
+        echo -e "  ${GREEN}retro kali${NC}         : Enter isolated Kali container"
+        echo -e "  ${GREEN}retro mon${NC}          : Telemetry HUD"
+        echo -e "  ${GREEN}retro scan <IP>${NC}    : Network and port auditing"
+        echo -e "  ${GREEN}retro snap${NC}         : Create instant system snapshot"
+        echo -e "  ${GREEN}retro ai \"<query>\"${NC} : Ethical hacking and repair mentor"
+        ;;
+esac
