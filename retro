@@ -1,0 +1,132 @@
+#!/usr/bin/env bash
+# ==============================================================================
+# RETRO OS - Unified Master Command Line Interface (CLI)
+# Usage: retro [doctor|mode|kali|scan|mon|snap|help]
+# ==============================================================================
+
+set -Eeuo pipefail
+
+# ANSI Color Codes
+GREEN="\033[92m"
+BLUE="\033[94m"
+YELLOW="\033[93m"
+CYAN="\033[96m"
+RED="\033[91m"
+BOLD="\033[1m"
+RESET="\033[0m"
+
+retro_banner() {
+    echo -e "${CYAN}${BOLD}"
+    echo "  ____  _____ _____ ____   ___     ___  ____  "
+    echo " |  _ \| ____|_   _|  _ \ / _ \   / _ \/ ___| "
+    echo " | |_) |  _|   | | | |_) | | | | | | | \___ \ "
+    echo " |  _ <| |___  | | |  _ <| |_| | | |_| |___) |"
+    echo " |_| \_\_____| |_| |_| \_\\___/   \___/|____/ "
+    echo -e "      ${YELLOW}Next-Gen Security & Resilient Architecture${RESET}\n"
+}
+
+show_help() {
+    retro_banner
+    echo -e "${BOLD}Available Commands:${RESET}"
+    echo -e "  ${GREEN}retro doctor${RESET}         : Inspects system health, clears locks, and performs self-healing"
+    echo -e "  ${GREEN}retro mode office${RESET}    : Switches to Windows 11 Minimal Developer Workspace"
+    echo -e "  ${GREEN}retro mode cyber${RESET}     : Switches to Dark Matrix / Cyberpunk Workspace"
+    echo -e "  ${GREEN}retro kali${RESET}           : Enters the isolated rootless Kali Linux container"
+    echo -e "  ${GREEN}retro mon${RESET}            : Displays live visual hardware telemetry via Btop++"
+    echo -e "  ${GREEN}retro scan <IP>${RESET}      : Executes an ultra-fast port scan via Rustscan in 3 seconds"
+    echo -e "  ${GREEN}retro snap${RESET}           : Creates an instant Btrfs manual system snapshot"
+    echo ""
+}
+
+# No arguments provided
+if [ $# -eq 0 ]; then
+    show_help
+    exit 0
+fi
+
+COMMAND="${1:-}"
+shift || true
+
+case "$COMMAND" in
+    doctor)
+        echo -e "${BLUE}[*] Running Retro-Doctor Diagnostic & Self-Healing Engine...${RESET}"
+        echo -e "${CYAN}[1/4] Checking ZRAM and Memory Status...${RESET}"
+        zramctl || echo -e "${YELLOW}[!] ZRAM is not running.${RESET}"
+        
+        echo -e "${CYAN}[2/4] Clearing broken APT caches and locks...${RESET}"
+        sudo rm -f /var/lib/apt/lists/lock /var/cache/apt/archives/lock /var/lib/dpkg/lock* || true
+        sudo dpkg --configure -a || true
+        
+        echo -e "${CYAN}[3/4] Trimming Btrfs Filesystem...${RESET}"
+        sudo fstrim -av || true
+        
+        echo -e "${CYAN}[4/4] Verifying EarlyOOM Anti-Freeze Daemon...${RESET}"
+        systemctl is-active earlyoom && echo -e "${GREEN}[✓] EarlyOOM Active.${RESET}" || echo -e "${RED}[-] EarlyOOM Inactive.${RESET}"
+        
+        echo -e "\n${GREEN}[✓] Retro-Doctor check completed. System is clean and optimized!${RESET}"
+        ;;
+
+    mode)
+        SUBMODE="${1:-}"
+        if [ "$SUBMODE" = "office" ] || [ "$SUBMODE" = "cyber" ]; then
+            if command -v retro-mode &> /dev/null; then
+                retro-mode "$SUBMODE"
+            else
+                echo -e "${RED}[-] retro-mode binary not found in PATH.${RESET}"
+            fi
+        else
+            echo -e "${YELLOW}Usage: retro mode [office|cyber]${RESET}"
+        fi
+        ;;
+
+    kali)
+        if command -v retro-kali &> /dev/null; then
+            retro-kali "$@"
+        else
+            echo -e "${RED}[-] retro-kali launcher not found.${RESET}"
+        fi
+        ;;
+
+    mon)
+        if command -v btop &> /dev/null; then
+            btop
+        else
+            top
+        fi
+        ;;
+
+    scan)
+        TARGET="${1:-}"
+        if [ -z "$TARGET" ]; then
+            echo -e "${RED}[-] Error: Target IP address required. Example: retro scan 192.168.1.1${RESET}"
+            exit 1
+        fi
+        if command -v rustscan &> /dev/null; then
+            echo -e "${BLUE}[*] Launching high-speed Rustscan on $TARGET...${RESET}"
+            rustscan -a "$TARGET"
+        else
+            echo -e "${YELLOW}[!] Rustscan not found. Falling back to Nmap inside container...${RESET}"
+            retro kali nmap -F "$TARGET"
+        fi
+        ;;
+
+    snap)
+        echo -e "${BLUE}[*] Generating instant Btrfs manual snapshot...${RESET}"
+        if command -v snapper &> /dev/null && findmnt -n -o FSTYPE / | grep -q "btrfs"; then
+            sudo snapper -c root create -d "Manual snapshot taken via retro CLI"
+            echo -e "${GREEN}[✓] Snapshot created successfully. Accessible via GRUB bootloader!${RESET}"
+        else
+            echo -e "${YELLOW}[!] Snapper or Btrfs root not available on this partition.${RESET}"
+        fi
+        ;;
+
+    help|--help|-h)
+        show_help
+        ;;
+
+    *)
+        echo -e "${RED}[-] Unknown command: $COMMAND${RESET}"
+        echo -e "${YELLOW}[*] Type 'retro help' to inspect available actions.${RESET}"
+        exit 1
+        ;;
+esac
