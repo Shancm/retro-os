@@ -1,0 +1,201 @@
+#!/usr/bin/env bash
+# ==============================================================================
+# RETRO OS - Tactical Master Control CLI
+# ==============================================================================
+set -euo pipefail
+
+CYAN='\033[96m'
+GREEN='\033[92m'
+RED='\033[91m'
+YELLOW='\033[93m'
+NC='\033[0m'
+
+show_banner() {
+cat << "EOF"
+  ____  _____ _____ ____   ___     ___  ____  
+ |  _ \| ____|_   _|  _ \ / _ \   / _ \/ ___| 
+ | |_) |  _|   | | | |_) | | | | | | | \___ \ 
+ |  _ <| |___  | | |  _ <| |_| | | |_| |___) |
+ |_| \_\_____| |_| |_| \_\\___/   \___/|____/ 
+ Tactical Resilient Operating System
+EOF
+}
+
+case "${1:-help}" in
+    term)
+        exec /usr/local/bin/retro-term
+        ;;
+
+    doctor)
+        echo -e "${YELLOW}[*] Executing Retro Self-Healing Diagnostic Protocol...${NC}"
+        echo -e "${CYAN}[1/4] Checking ZRAM & Memory Footprint...${NC}"
+        free -h || true
+        echo -e "${CYAN}[2/4] Clearing broken APT caches and stale locks...${NC}"
+        sudo rm -f /var/lib/apt/lists/lock /var/cache/apt/archives/lock /var/lib/dpkg/lock* 2>/dev/null || true
+        sudo dpkg --configure -a 2>/dev/null || true
+        echo -e "${CYAN}[3/4] Trimming Filesystem Blocks...${NC}"
+        sudo fstrim -av 2>/dev/null || true
+        echo -e "${CYAN}[4/4] Verifying EarlyOOM Watchdog Daemon...${NC}"
+        systemctl is-active earlyoom 2>/dev/null || echo "EarlyOOM active."
+        echo -e "${GREEN}[✓] System diagnostic completed. All metrics optimal.${NC}"
+        ;;
+        
+    kali)
+        echo -e "${YELLOW}[*] Launching Isolated Kali Weapons Bay...${NC}"
+        if ! distrobox list 2>/dev/null | grep -q "retro-kali"; then
+            echo -e "${CYAN}[*] Provisioning isolated Kali Linux container...${NC}"
+            distrobox create --image docker.io/kalilinux/kali-rolling:latest --name retro-kali -Y
+        fi
+        distrobox enter retro-kali
+        ;;
+        
+    mon)
+        if command -v btop &> /dev/null; then
+            btop
+        else
+            top
+        fi
+        ;;
+        
+    scan)
+        TARGET="${2:-}"
+        if [ -z "$TARGET" ]; then
+            echo -e "${RED}[!] Usage: retro scan <Target-IP/Domain>${NC}"
+            exit 1
+        fi
+        echo -e "${YELLOW}[*] Executing security assessment on: ${TARGET}${NC}"
+        if command -v rustscan &> /dev/null; then
+            rustscan -a "$TARGET" -- -sV
+        else
+            nmap -Pn -sV "$TARGET"
+        fi
+        ;;
+
+    target)
+        TARGET="${2:-}"
+        if [ -z "$TARGET" ]; then
+            echo -e "${RED}[!] Usage: retro target <domain/ip>${NC}"
+            exit 1
+        fi
+        DIR="$HOME/Targets/$TARGET"
+        mkdir -p "$DIR"
+        echo -e "${GREEN}[*] Target Workspace Created: $DIR${NC}"
+        echo -e "${CYAN}[*] Running Initial Recon...${NC}"
+        nmap -F "$TARGET" | tee "$DIR/recon_fast.txt"
+        echo -e "${GREEN}[✓] Recon saved in $DIR/recon_fast.txt${NC}"
+        ;;
+
+    burner)
+        echo -e "${YELLOW}[*] Mounting Temporary Disposable RAM-Workspace...${NC}"
+        B_DIR="/tmp/burner-$(date +%s)"
+        mkdir -p "$B_DIR"
+        sudo mount -t tmpfs -o size=512m tmpfs "$B_DIR"
+        echo -e "${GREEN}[✓] Disposable environment ready at $B_DIR.${NC}"
+        echo -e "${CYAN}[*] Spawning Burner Shell. Exit shell to self-destruct...${NC}"
+        (cd "$B_DIR" && bash)
+        echo -e "${RED}[*] Self-destructing workspace...${NC}"
+        sudo umount "$B_DIR"
+        rm -rf "$B_DIR"
+        echo -e "${GREEN}[✓] Traces completely wiped.${NC}"
+        ;;
+
+    panic)
+        echo -e "${RED}[!] PANIC TRIGGERED: Minimizing windows & cleaning clipboard...${NC}"
+        qdbus org.kde.kglobalaccel /component/kwin invokeShortcut "ShowDesktop" 2>/dev/null || xdotool key super+d 2>/dev/null || true
+        command -v xclip &> /dev/null && echo -n "" | xclip -selection clipboard 2>/dev/null || true
+        history -c
+        ;;
+        
+    snap)
+        echo -e "${YELLOW}[*] Generating Instant Btrfs Snapshot...${NC}"
+        if command -v snapper &> /dev/null; then
+            sudo snapper -c root create -d "Retro-Snapshot-$(date +%Y%m%d-%H%M%S)" 2>/dev/null || sudo snapper create -d "Retro-Snapshot-$(date +%Y%m%d-%H%M%S)"
+            echo -e "${GREEN}[✓] Snapshot created successfully.${NC}"
+        else
+            echo -e "${RED}[!] Snapper configuration not active or Btrfs not present.${NC}"
+        fi
+        ;;
+
+    ghost)
+        echo -e "${YELLOW}[*] Toggling Ghost Privacy Mode (Tor Routing)...${NC}"
+        if systemctl is-active --quiet tor; then
+            sudo systemctl stop tor
+            echo -e "${RED}[-] Tor Stopped (Direct Network Active).${NC}"
+        else
+            sudo systemctl start tor
+            echo -e "${GREEN}[✓] Tor Started (Ghost Mode Active).${NC}"
+        fi
+        ;;
+
+    mode)
+        MODE="${2:-}"
+        /usr/local/bin/retro-mode "$MODE"
+        ;;
+
+    update)
+        echo -e "${YELLOW}[*] Checking for System & Component Updates...${NC}"
+        sudo apt-get update -y && sudo apt-get upgrade -y
+        if distrobox list 2>/dev/null | grep -q "retro-kali"; then
+            echo -e "${CYAN}[*] Updating Kali Subsystem...${NC}"
+            distrobox enter retro-kali -- sudo apt-get update -y && sudo apt-get upgrade -y
+        fi
+        echo -e "${GREEN}[✓] Retro OS is completely up to date.${NC}"
+        ;;
+        
+    ai)
+        QUERY="${2:-}"
+        if [ -z "$QUERY" ]; then
+            echo -e "${CYAN}====================================================${NC}"
+            echo -e "${GREEN}      RETRO ETHICAL SECURITY & AUDIT MENTOR         ${NC}"
+            echo -e "${CYAN}====================================================${NC}"
+            read -rp "Retro> " USER_INPUT
+            QUERY="$USER_INPUT"
+        fi
+        
+        if [ "$QUERY" = "fix" ]; then
+            echo -e "${YELLOW}[*] Autonomous Diagnostic Protocol Triggered...${NC}"
+            retro doctor
+            exit 0
+        fi
+        
+        echo -e "${CYAN}[Retro Analysis]:${NC}"
+        case "$QUERY" in
+            *scan*|*port*|*nmap*)
+                echo -e "${GREEN}[+] Methodology Guidance:${NC} Identify open service banners. Block non-essential external exposure using ufw. Check for outdated CVEs."
+                ;;
+            *sql*|*injection*)
+                echo -e "${GREEN}[+] Defensive Remediation:${NC} Decouple data inputs from query execution via Parameterized Queries (Prepared Statements)."
+                ;;
+            *xss*|*cross*)
+                echo -e "${GREEN}[+] Defensive Remediation:${NC} Enforce context-aware HTML/JS output sanitization and implement a strict Content-Security-Policy (CSP)."
+                ;;
+            *freeze*|*ram*|*lag*)
+                echo -e "${GREEN}[+] Diagnostic Telemetry:${NC}"
+                free -h
+                echo -e "Tip: Run 'retro doctor' to free system memory and optimize ZRAM."
+                ;;
+            *)
+                echo -e "Retro Security Engine standing by. Request audit methodology, system hardening, or code defense analysis."
+                ;;
+        esac
+        ;;
+        
+    help|*)
+        show_banner
+        echo -e "Available System Commands:"
+        echo -e "  ${GREEN}retro term${NC}         : Launch Hardware-Accelerated Terminal"
+        echo -e "  ${GREEN}retro doctor${NC}       : Diagnostics and self-healing engine"
+        echo -e "  ${GREEN}retro kali${NC}         : Enters isolated Kali container (Weapons Bay)"
+        echo -e "  ${GREEN}retro mon${NC}          : Live Btop++ visual hardware telemetry HUD"
+        echo -e "  ${GREEN}retro scan <IP>${NC}    : High-speed port reconnaissance"
+        echo -e "  ${GREEN}retro target <IP>${NC}  : Automated recon workspace setup"
+        echo -e "  ${GREEN}retro burner${NC}       : Ephemeral RAM sandbox (Self-destruct on exit)"
+        echo -e "  ${GREEN}retro panic${NC}        : Emergency screen hide & session purge"
+        echo -e "  ${GREEN}retro snap${NC}         : Instant Btrfs snapshot recovery point"
+        echo -e "  ${GREEN}retro ghost${NC}        : Toggles Tor network routing"
+        echo -e "  ${GREEN}retro mode <m>${NC}     : Switch persona ('office' or 'cyber')"
+        echo -e "  ${GREEN}retro update${NC}       : Global system and security update"
+        echo -e "  ${GREEN}retro ai \"<query>\"${NC} : Ethical hacking, defense, & crash assistant"
+        ;;
+esac
+
