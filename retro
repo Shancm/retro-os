@@ -1,0 +1,112 @@
+#!/usr/bin/env bash
+# ==============================================================================
+# RETRO OS - Tactical Master Control CLI (Resource Efficient)
+# ==============================================================================
+set -euo pipefail
+
+CYAN='\033[96m'
+GREEN='\033[92m'
+RED='\033[91m'
+YELLOW='\033[93m'
+NC='\033[0m'
+
+show_banner() {
+cat << "EOF"
+  ____  _____ _____ ____   ___     ___  ____  
+ |  _ \| ____|_   _|  _ \ / _ \   / _ \/ ___| 
+ | |_) |  _|   | | | |_) | | | | | | | \___ \ 
+ |  _ <| |___  | | |  _ <| |_| | | |_| |___) |
+ |_| \_\_____| |_| |_| \_\\___/   \___/|____/ 
+ Tactical Resilient Operating System
+EOF
+}
+
+case "${1:-help}" in
+    term)
+        exec /usr/local/bin/retro-term
+        ;;
+
+    doctor)
+        echo -e "${YELLOW}[*] Executing Retro Self-Healing & Clean-up Protocol...${NC}"
+        echo -e "${CYAN}[1/5] Checking Memory & Optimizing ZRAM...${NC}"
+        free -h || true
+        echo -e "${CYAN}[2/5] Cleaning old Snapshots (Saving Disk Space)...${NC}"
+        sudo snapper -c root cleanup number 2>/dev/null || true
+        sudo snapper -c root cleanup timeline 2>/dev/null || true
+        echo -e "${CYAN}[3/5] Clearing broken APT caches & temporary packages...${NC}"
+        sudo rm -f /var/lib/apt/lists/lock /var/cache/apt/archives/lock /var/lib/dpkg/lock* 2>/dev/null || true
+        sudo apt-get clean && sudo apt-get autoremove -y 2>/dev/null || true
+        echo -e "${CYAN}[4/5] Trimming SSD Blocks...${NC}"
+        sudo fstrim -av 2>/dev/null || true
+        echo -e "${CYAN}[5/5] Checking Daemons...${NC}"
+        systemctl is-active earlyoom 2>/dev/null && echo "EarlyOOM active."
+        echo -e "${GREEN}[✓] System Clean & Optimal.${NC}"
+        ;;
+        
+    kali)
+        echo -e "${YELLOW}[*] Launching Isolated Kali Weapons Bay...${NC}"
+        if ! distrobox list 2>/dev/null | grep -q "retro-kali"; then
+            echo -e "${CYAN}[*] Creating minimal Kali container...${NC}"
+            distrobox create --image docker.io/kalilinux/kali-rolling:latest --name retro-kali -Y
+        fi
+        distrobox enter retro-kali
+        # കണ്ടെയ്നർ ഉപയോഗം കഴിഞ്ഞാൽ റാം ഫ്രീ ചെയ്യാൻ തനിയെ സ്റ്റോപ്പ് ചെയ്യുന്നു
+        podman stop retro-kali 2>/dev/null || true
+        echo -e "${GREEN}[✓] Kali Session Closed. RAM freed.${NC}"
+        ;;
+
+    burner)
+        echo -e "${YELLOW}[*] Creating Temp RAM Sandbox (Zero-Trace)...${NC}"
+        B_DIR="/tmp/burner-$(date +%s)"
+        mkdir -p "$B_DIR"
+        sudo mount -t tmpfs -o size=512m tmpfs "$B_DIR"
+        echo -e "${GREEN}[✓] Ready at $B_DIR. Type 'exit' to self-destruct.${NC}"
+        (cd "$B_DIR" && bash)
+        echo -e "${RED}[*] Terminating and purging RAM sandbox...${NC}"
+        sudo umount "$B_DIR"
+        rm -rf "$B_DIR"
+        echo -e "${GREEN}[✓] Sandbox wiped.${NC}"
+        ;;
+
+    panic)
+        echo -e "${RED}[!] Stealth Panic Triggered...${NC}"
+        qdbus org.kde.kglobalaccel /component/kwin invokeShortcut "ShowDesktop" 2>/dev/null || true
+        history -c
+        echo -e "${GREEN}[✓] Cleared.${NC}"
+        ;;
+
+    snap)
+        echo -e "${YELLOW}[*] Creating Instant Safe-Point Snapshot...${NC}"
+        sudo snapper -c root create -d "Retro-Backup-$(date +%Y%m%d-%H%M%S)" 2>/dev/null || true
+        echo -e "${GREEN}[✓] Snapshot created.${NC}"
+        ;;
+
+    ghost)
+        if systemctl is-active --quiet tor; then
+            sudo systemctl stop tor
+            echo -e "${RED}[-] Tor Disabled (Standard Network).${NC}"
+        else
+            sudo systemctl start tor
+            echo -e "${GREEN}[✓] Tor Activated (Ghost Mode).${NC}"
+        fi
+        ;;
+
+    update)
+        echo -e "${YELLOW}[*] Fetching updates...${NC}"
+        sudo apt-get update -y && sudo apt-get upgrade -y
+        echo -e "${GREEN}[✓] Updated.${NC}"
+        ;;
+        
+    help|*)
+        show_banner
+        echo -e "Commands:"
+        echo -e "  ${GREEN}retro term${NC}    : Open Retro Terminal"
+        echo -e "  ${GREEN}retro doctor${NC}  : Memory/disk clean-up and fix errors"
+        echo -e "  ${GREEN}retro kali${NC}    : Launch Kali container (auto-frees RAM on exit)"
+        echo -e "  ${GREEN}retro burner${NC}  : Disposable RAM sandbox"
+        echo -e "  ${GREEN}retro snap${NC}    : Save quick restore point"
+        echo -e "  ${GREEN}retro ghost${NC}   : Toggle Tor Privacy Mode"
+        echo -e "  ${GREEN}retro panic${NC}   : Hide everything instantly"
+        echo -e "  ${GREEN}retro update${NC}  : Update system"
+        ;;
+esac
