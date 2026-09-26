@@ -12,8 +12,7 @@ jobs:
 
       - name: Fix Line Endings and Run Build
         run: |
-          sudo apt-get update -qq && sudo apt-get install -y -qq dos2unix
-          dos2unix *.sh config.env retro 2>/dev/null || sed -i 's/\r$//' *.sh config.env retro
+          find . -maxdepth 2 -type f \( -name "*.sh" -o -name "config.env" -o -name "retro" \) -exec sed -i 's/\r$//' {} +
           chmod +x *.sh || true
           [ -f retro ] && chmod +x retro || true
           sudo bash ./build_final_iso.sh
