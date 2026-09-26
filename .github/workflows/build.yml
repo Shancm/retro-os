@@ -9,20 +9,21 @@ jobs:
     steps:
       - name: Setup and Build
         run: |
-          # 1. ആവശ്യമായ എല്ലാ ടൂളുകളും ഇൻസ്റ്റാൾ ചെയ്യുന്നു
+          # 1. ആവശ്യമായ ബിൽഡ് ടൂളുകൾ ഇൻസ്റ്റാൾ ചെയ്യുന്നു
           sudo apt-get update -qq
           sudo apt-get install -y -qq git dos2unix isolinux xorriso mtools dosfstools squashfs-tools
 
-          # 2. isohybrid ടൂൾ സിസ്റ്റം പാത്തിലേക്ക് ലിങ്ക് ചെയ്യുന്നു
-          if [ -f /usr/lib/ISOLINUX/isohybrid ]; then
-            sudo ln -sf /usr/lib/ISOLINUX/isohybrid /usr/local/bin/isohybrid
+          # 2. isohybrid ടൂൾ /usr/bin-ലേക്ക് നൽകുന്നു (xorriso ഉപയോഗിച്ചുള്ള ഫോൾബാക്ക് അടക്കം)
+          ISOHYBRID_BIN=$(find /usr -name "isohybrid" -type f 2>/dev/null | head -n 1)
+          if [ -n "$ISOHYBRID_BIN" ]; then
+            sudo ln -sf "$ISOHYBRID_BIN" /usr/bin/isohybrid
           else
-            # xorriso-യുടെ isohybrid ഫീച്ചർ വഴി റാപ്പർ സ്ക്രിപ്റ്റ് ഉണ്ടാക്കുന്നു
-            sudo tee /usr/local/bin/isohybrid > /dev/null << 'EOF'
-          #!/bin/sh
-          xorriso -as isolinux --isohybrid-mbr "$@"
-          EOF
-            sudo chmod +x /usr/local/bin/isohybrid
+            sudo bash -c 'cat << "EOF" > /usr/bin/isohybrid
+#!/bin/sh
+# xorriso wrapper for isohybrid
+xorriso -as isolinux --isohybrid-mbr "$@"
+EOF'
+            sudo chmod +x /usr/bin/isohybrid
           fi
 
           # 3. പ്രോജക്ട് ക്ലോൺ ചെയ്യുന്നു
@@ -39,7 +40,7 @@ jobs:
           echo "Starting build with: $BUILD_SCRIPT"
           sudo bash "./$BUILD_SCRIPT"
 
-          # 5. ഔട്ട്പുട്ട് മാറ്റുന്നു
+          # 5. ഔട്ട്പുട്ട് ഫയൽ മാറ്റുന്നു
           mkdir -p $GITHUB_WORKSPACE/output
           find . -name "*.iso" -exec mv {} $GITHUB_WORKSPACE/output/ \; 2>/dev/null || true
 
@@ -48,4 +49,3 @@ jobs:
         with:
           name: Retro-OS-ISO
           path: output/*.iso
-
