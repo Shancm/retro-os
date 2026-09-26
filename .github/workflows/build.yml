@@ -14,12 +14,18 @@ jobs:
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y -qq dos2unix
-          find . -type f -exec dos2unix -q {} + || true
+          
+          # ഫയൽ എവിടെയാണെന്ന് കണ്ടെത്തി ആ ഡയറക്ടറിയിലേക്ക് മാറുക
+          TARGET_DIR=$(find . -name "build_final_iso.sh" -exec dirname {} \; | head -n 1)
+          cd "$TARGET_DIR"
+          
+          # ലൈൻ എൻഡിങ് തിരുത്തി എക്സിക്യൂട്ട് ചെയ്യുക
+          dos2unix *.sh retro config.env 2>/dev/null || true
           chmod +x *.sh retro 2>/dev/null || chmod +x *.sh || true
-          sudo bash build_final_iso.sh
+          sudo bash ./build_final_iso.sh
 
       - name: Upload ISO
         uses: actions/upload-artifact@v4
         with:
           name: Retro-OS-ISO
-          path: "*.iso"
+          path: "**/*.iso"
