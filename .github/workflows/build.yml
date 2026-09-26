@@ -10,19 +10,27 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Run Build
+      - name: Prepare and Run Build
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y -qq dos2unix
-          
-          # ഫയൽ എവിടെയാണെന്ന് കണ്ടെത്തി ആ ഡയറക്ടറിയിലേക്ക് മാറുക
-          TARGET_DIR=$(find . -name "build_final_iso.sh" -exec dirname {} \; | head -n 1)
-          cd "$TARGET_DIR"
-          
-          # ലൈൻ എൻഡിങ് തിരുത്തി എക്സിക്യൂട്ട് ചെയ്യുക
-          dos2unix *.sh retro config.env 2>/dev/null || true
-          chmod +x *.sh retro 2>/dev/null || chmod +x *.sh || true
-          sudo bash ./build_final_iso.sh
+
+          # ഫയലുകളുടെ വിൻഡോസ് ലൈൻ എൻഡിങ് പൂർണ്ണമായി നീക്കം ചെയ്യുക
+          find "$GITHUB_WORKSPACE" -type f -exec dos2unix -q {} + || true
+
+          # സ്ക്രിപ്റ്റുകൾക്ക് പെർമിഷൻ നൽകുക
+          find "$GITHUB_WORKSPACE" -type f -name "*.sh" -exec chmod +x {} + || true
+          [ -f "$GITHUB_WORKSPACE/retro" ] && chmod +x "$GITHUB_WORKSPACE/retro" || true
+
+          # build_final_iso.sh കിടക്കുന്ന ഫോൾഡർ കണ്ടെത്തി അവിടേക്ക് മാറി റൺ ചെയ്യുക
+          ISO_SCRIPT=$(find "$GITHUB_WORKSPACE" -name "build_final_iso.sh" | head -n 1)
+          if [ -z "$ISO_SCRIPT" ]; then
+            echo "Error: build_final_iso.sh not found!"
+            exit 1
+          fi
+
+          cd "$(dirname "$ISO_SCRIPT")"
+          sudo bash "$ISO_SCRIPT"
 
       - name: Upload ISO
         uses: actions/upload-artifact@v4
