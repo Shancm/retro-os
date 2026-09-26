@@ -10,9 +10,10 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Check Files & Run Build
+      - name: Fix Line Endings and Run Build
         run: |
-          ls -la
+          sudo apt-get update -qq && sudo apt-get install -y -qq dos2unix
+          dos2unix *.sh config.env retro 2>/dev/null || sed -i 's/\r$//' *.sh config.env retro
           chmod +x *.sh || true
           [ -f retro ] && chmod +x retro || true
           sudo bash ./build_final_iso.sh
