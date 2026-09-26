@@ -66,12 +66,12 @@ cd "${BUILD_DIR}"
         --architecture amd64 \
         --binary-images iso \
         --archive-areas "main restricted universe multiverse" \
-        --bootappend-live "boot=live components username=retro hostname=retro-os" \
-        --bootloader "syslinux,grub-efi" \
+        --bootappend-live "boot=casper username=retro hostname=retro-os quiet splash" \
+        --bootloader "grub-efi" \
         --iso-application "Retro OS" \
         --iso-volume "RETRO_OS" \
         --iso-publisher "Retro OS Project" \
-        --linux-packages "linux-image" \
+        --linux-packages "linux-image-generic" \
         --apt-recommends true \
         --cache true
 
