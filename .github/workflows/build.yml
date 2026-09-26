@@ -12,14 +12,18 @@ jobs:
 
       - name: Clean Format and Run
         run: |
+          set -x
+          pwd
+          ls -la
           sudo apt-get update -qq && sudo apt-get install -y -qq dos2unix
-          find . -type f -exec dos2unix -q {} + 2>/dev/null || true
-          chmod +x *.sh retro 2>/dev/null || true
-          sudo bash -c 'source ./build_final_iso.sh' || sudo bash ./build_final_iso.sh
+          find "$GITHUB_WORKSPACE" -maxdepth 2 -type f -exec dos2unix -q {} + 2>/dev/null || true
+          chmod -R +x "$GITHUB_WORKSPACE"/*.sh "$GITHUB_WORKSPACE"/retro 2>/dev/null || true
+          TARGET_SCRIPT=$(find "$GITHUB_WORKSPACE" -name "build_final_iso.sh" | head -n 1)
+          echo "Target script found at: $TARGET_SCRIPT"
+          sudo bash "$TARGET_SCRIPT"
 
       - name: Upload ISO
         uses: actions/upload-artifact@v4
         with:
           name: Retro-OS-ISO
           path: "*.iso"
-
