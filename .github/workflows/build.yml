@@ -10,15 +10,15 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Run Build
+      - name: Check Files & Run Build
         run: |
+          ls -la
           chmod +x *.sh || true
           [ -f retro ] && chmod +x retro || true
-          sudo ./build_final_iso.sh
+          sudo bash ./build_final_iso.sh
 
       - name: Upload ISO
         uses: actions/upload-artifact@v4
         with:
           name: Retro-OS-ISO
           path: "*.iso"
-
