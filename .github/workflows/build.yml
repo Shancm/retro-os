@@ -10,30 +10,33 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Prepare and Run Build
+      - name: Locate and Run Build
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y -qq dos2unix
 
-          # ഫയലുകളുടെ വിൻഡോസ് ലൈൻ എൻഡിങ് പൂർണ്ണമായി നീക്കം ചെയ്യുക
-          find "$GITHUB_WORKSPACE" -type f -exec dos2unix -q {} + || true
+          # ഫയൽ സിസ്റ്റം മുഴുവൻ തപ്പി build_final_iso.sh കണ്ടെത്തുന്നു
+          TARGET=$(sudo find / -name "build_final_iso.sh" 2>/dev/null | grep "retro-os" | head -n 1)
 
-          # സ്ക്രിപ്റ്റുകൾക്ക് പെർമിഷൻ നൽകുക
-          find "$GITHUB_WORKSPACE" -type f -name "*.sh" -exec chmod +x {} + || true
-          [ -f "$GITHUB_WORKSPACE/retro" ] && chmod +x "$GITHUB_WORKSPACE/retro" || true
-
-          # build_final_iso.sh കിടക്കുന്ന ഫോൾഡർ കണ്ടെത്തി അവിടേക്ക് മാറി റൺ ചെയ്യുക
-          ISO_SCRIPT=$(find "$GITHUB_WORKSPACE" -name "build_final_iso.sh" | head -n 1)
-          if [ -z "$ISO_SCRIPT" ]; then
-            echo "Error: build_final_iso.sh not found!"
-            exit 1
+          if [ -z "$TARGET" ]; then
+            echo "Direct search fallback..."
+            TARGET=$(find . -name "build_final_iso.sh" | head -n 1)
           fi
 
-          cd "$(dirname "$ISO_SCRIPT")"
-          sudo bash "$ISO_SCRIPT"
+          echo "Found script at: $TARGET"
+          DIR=$(dirname "$TARGET")
+          cd "$DIR"
+
+          # വിൻഡോസ് ഫോർമാറ്റ് മാറ്റി പെർമിഷൻ നൽകുന്നു
+          dos2unix *.sh retro config.env 2>/dev/null || true
+          chmod +x *.sh retro 2>/dev/null || chmod +x *.sh || true
+
+          # റൂട്ട് ആയി സ്ക്രിപ്റ്റ് റൺ ചെയ്യുന്നു
+          sudo bash build_final_iso.sh
 
       - name: Upload ISO
         uses: actions/upload-artifact@v4
         with:
           name: Retro-OS-ISO
           path: "**/*.iso"
+
