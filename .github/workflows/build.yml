@@ -9,21 +9,16 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Debug and List Files
+        run: |
+          pwd
+          ls -la
 
       - name: Run Build
         run: |
-          # ഫയൽ ഏത് ഫോൾഡറിലാണെങ്കിലും അത് കണ്ടുപിടിക്കുക
-          SCRIPT_PATH=$(find . -name "build_final_iso.sh" | head -n 1)
-          if [ -z "$SCRIPT_PATH" ]; then
-            echo "build_final_iso.sh ഫയൽ കണ്ടെത്താനായില്ല!"
-            exit 1
-          fi
-          
-          # ആ ഫോൾഡറിലേക്ക് മാറുക
-          SCRIPT_DIR=$(dirname "$SCRIPT_PATH")
-          cd "$SCRIPT_DIR"
-          
-          # പെർമിഷൻ നൽകി റൺ ചെയ്യുക
           chmod +x *.sh || true
           [ -f retro ] && chmod +x retro || true
           sudo bash ./build_final_iso.sh
@@ -32,4 +27,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: Retro-OS-ISO
-          path: "**/*.iso"
+          path: "*.iso"
