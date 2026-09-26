@@ -69,7 +69,6 @@ cd "${BUILD_DIR}"
         --iso-application "Retro OS" \
         --iso-volume "RETRO_OS" \
         --iso-publisher "Retro OS Project" \
-        --debian-installer none \
         --linux-packages "linux-image" \
         --apt-recommends true \
         --cache true
