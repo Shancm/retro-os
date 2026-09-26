@@ -10,15 +10,18 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Fix Line Endings and Run Build
+      - name: Fix Files and Run Build
         run: |
-          find . -maxdepth 2 -type f \( -name "*.sh" -o -name "config.env" -o -name "retro" \) -exec sed -i 's/\r$//' {} +
+          sudo apt-get update -qq && sudo apt-get install -y -qq dos2unix
+          dos2unix *.sh config.env retro 2>/dev/null || true
+          sed -i -e 's/\r$//' *.sh config.env retro 2>/dev/null || true
           chmod +x *.sh || true
           [ -f retro ] && chmod +x retro || true
-          sudo bash ./build_final_iso.sh
+          sudo /bin/bash build_final_iso.sh
 
       - name: Upload ISO
         uses: actions/upload-artifact@v4
         with:
           name: Retro-OS-ISO
           path: "*.iso"
+
