@@ -64,7 +64,7 @@ cd "${BUILD_DIR}"
     lb config \
         --distribution noble \
         --architecture amd64 \
-        --binary-images iso-hybrid \
+        --binary-images iso \
         --archive-areas "main restricted universe multiverse" \
         --bootappend-live "boot=live components username=retro hostname=retro-os" \
         --bootloader "grub-efi" \
