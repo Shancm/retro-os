@@ -47,6 +47,8 @@ apt-get install -y -qq \
     xorriso \
     dosfstools \
     squashfs-tools \
+    isolinux \
+    syslinux-utils \
     >/dev/null
 
 retro_ok "Host build dependencies installed."
