@@ -9,40 +9,34 @@ jobs:
     steps:
       - name: Setup and Build
         run: |
-          # 1. ആവശ്യമായ ബിൽഡ് ടൂളുകൾ ഇൻസ്റ്റാൾ ചെയ്യുന്നു
           sudo apt-get update -qq
           sudo apt-get install -y -qq git dos2unix isolinux xorriso mtools dosfstools squashfs-tools
 
-          # 2. isohybrid ടൂൾ /usr/bin-ലേക്ക് നൽകുന്നു (xorriso ഉപയോഗിച്ചുള്ള ഫോൾബാക്ക് അടക്കം)
-          ISOHYBRID_BIN=$(find /usr -name "isohybrid" -type f 2>/dev/null | head -n 1)
-          if [ -n "$ISOHYBRID_BIN" ]; then
-            sudo ln -sf "$ISOHYBRID_BIN" /usr/bin/isohybrid
-          else
-            sudo bash -c 'cat << "EOF" > /usr/bin/isohybrid
-#!/bin/sh
-# xorriso wrapper for isohybrid
-xorriso -as isolinux --isohybrid-mbr "$@"
-EOF'
-            sudo chmod +x /usr/bin/isohybrid
-          fi
+          # isohybrid റാപ്പർ കൃത്യമായി ഉണ്ടാക്കുന്നു
+          sudo bash -c 'cat << "EOF" > /usr/bin/isohybrid
+          #!/bin/sh
+          xorriso -as isolinux --isohybrid-mbr "$@"
+          EOF'
+          sudo chmod +x /usr/bin/isohybrid
 
-          # 3. പ്രോജക്ട് ക്ലോൺ ചെയ്യുന്നു
+          # പ്രോജക്ട് ക്ലോൺ ചെയ്യുന്നു
           cd /home/runner
           rm -rf my-retro-build
           git clone --depth 1 https://github.com/Shancm/retro-os.git my-retro-build
           cd my-retro-build
 
-          # 4. ഫോർമാറ്റിംഗ് ശരിയാക്കി റൺ ചെയ്യുന്നു
+          # ഫയൽ ഫോർമാറ്റിംഗ് ശരിയാക്കുന്നു
           find . -type f -exec dos2unix -q {} + || true
           chmod -R +x .
 
+          # ബിൽഡ് ആരംഭിക്കുന്നു
           BUILD_SCRIPT=$(ls | grep -i "build.*iso.*sh" | head -n 1)
           echo "Starting build with: $BUILD_SCRIPT"
           sudo bash "./$BUILD_SCRIPT"
 
-          # 5. ഔട്ട്പുട്ട് ഫയൽ മാറ്റുന്നു
-          mkdir -p $GITHUB_WORKSPACE/output
-          find . -name "*.iso" -exec mv {} $GITHUB_WORKSPACE/output/ \; 2>/dev/null || true
+          # ഔട്ട്പുട്ട് ഫയൽ മാറ്റുന്നു
+          mkdir -p "$GITHUB_WORKSPACE/output"
+          find . -name "*.iso" -exec mv {} "$GITHUB_WORKSPACE/output/" \; 2>/dev/null || true
 
       - name: Upload ISO
         uses: actions/upload-artifact@v4
