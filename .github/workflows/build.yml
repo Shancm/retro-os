@@ -10,18 +10,16 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Fix Files and Run Build
+      - name: Clean Format and Run
         run: |
-          cd "$GITHUB_WORKSPACE"
           sudo apt-get update -qq && sudo apt-get install -y -qq dos2unix
-          dos2unix *.sh config.env retro 2>/dev/null || true
-          sed -i -e 's/\r$//' *.sh config.env retro 2>/dev/null || true
-          chmod +x *.sh || true
-          [ -f retro ] && chmod +x retro || true
-          sudo bash "$GITHUB_WORKSPACE/build_final_iso.sh"
+          find . -type f -exec dos2unix -q {} + 2>/dev/null || true
+          chmod +x *.sh retro 2>/dev/null || true
+          sudo bash -c 'source ./build_final_iso.sh' || sudo bash ./build_final_iso.sh
 
       - name: Upload ISO
         uses: actions/upload-artifact@v4
         with:
           name: Retro-OS-ISO
           path: "*.iso"
+
