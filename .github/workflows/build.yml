@@ -7,36 +7,33 @@ jobs:
   build:
     runs-on: ubuntu-24.04
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-
-      - name: Locate and Run Build
+      - name: Setup and Build
         run: |
+          # 1. ആവശ്യമായ ടൂളുകൾ ഇൻസ്റ്റാൾ ചെയ്യുക
           sudo apt-get update -qq
-          sudo apt-get install -y -qq dos2unix
+          sudo apt-get install -y -qq git dos2unix
 
-          # ഫയൽ സിസ്റ്റം മുഴുവൻ തപ്പി build_final_iso.sh കണ്ടെത്തുന്നു
-          TARGET=$(sudo find / -name "build_final_iso.sh" 2>/dev/null | grep "retro-os" | head -n 1)
+          # 2. ഏറ്റവും പുതിയ ഫയലുകൾ ഒരു പുതിയ ഫോൾഡറിലേക്ക് നേരിട്ട് ക്ലോൺ ചെയ്യുക
+          cd /home/runner
+          rm -rf my-retro-build
+          git clone --depth 1 https://github.com/Shancm/retro-os.git my-retro-build
+          cd my-retro-build
 
-          if [ -z "$TARGET" ]; then
-            echo "Direct search fallback..."
-            TARGET=$(find . -name "build_final_iso.sh" | head -n 1)
-          fi
+          # 3. ഫോർമാറ്റിംഗ് ശരിയാക്കി പെർമിഷൻ നൽകുക
+          find . -type f -exec dos2unix -q {} + || true
+          chmod +x *.sh || true
+          [ -f retro ] && chmod +x retro || true
 
-          echo "Found script at: $TARGET"
-          DIR=$(dirname "$TARGET")
-          cd "$DIR"
+          # 4. നേരിട്ട് ISO നിർമ്മാണം ആരംഭിക്കുക
+          echo "Starting ISO build inside $(pwd)..."
+          sudo bash ./build_final_iso.sh
 
-          # വിൻഡോസ് ഫോർമാറ്റ് മാറ്റി പെർമിഷൻ നൽകുന്നു
-          dos2unix *.sh retro config.env 2>/dev/null || true
-          chmod +x *.sh retro 2>/dev/null || chmod +x *.sh || true
-
-          # റൂട്ട് ആയി സ്ക്രിപ്റ്റ് റൺ ചെയ്യുന്നു
-          sudo bash build_final_iso.sh
+          # 5. ഉണ്ടാക്കിയ ISO ഫയൽ വർക്ക്‌സ്‌പേസിലേക്ക് മാറ്റുക
+          mkdir -p $GITHUB_WORKSPACE/output
+          mv *.iso $GITHUB_WORKSPACE/output/ 2>/dev/null || true
 
       - name: Upload ISO
         uses: actions/upload-artifact@v4
         with:
           name: Retro-OS-ISO
-          path: "**/*.iso"
-
+          path: output/*.iso
