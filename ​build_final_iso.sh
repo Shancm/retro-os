@@ -59,21 +59,20 @@ rm -rf "${BUILD_DIR}"
 mkdir -p "${BUILD_DIR}"
 cd "${BUILD_DIR}"
 
-lb config \
-    --distribution "${DISTRO}" \
-    --architecture "${ARCH}" \
-    --binary-images iso-hybrid \
-    --archive-areas "main restricted universe multiverse" \
-    --bootappend-live "boot=live components username=retro hostname=retro-os" \
-    --bootloaders "grub-efi" \
-    --uefi-secure-boot disable \
-    --iso-application "${RETRO_OS_NAME}" \
-    --iso-volume "RETRO_OS" \
-    --iso-publisher "Retro OS Project" \
-    --debian-installer none \
-    --linux-packages "linux-image" \
-    --apt-recommends true \
-    --cache true
+    lb config \
+        --distribution noble \
+        --architecture amd64 \
+        --binary-images iso-hybrid \
+        --archive-areas "main restricted universe multiverse" \
+        --bootappend-live "boot=live components username=retro hostname=retro-os" \
+        --bootloader "grub-efi" \
+        --iso-application "Retro OS" \
+        --iso-volume "RETRO_OS" \
+        --iso-publisher "Retro OS Project" \
+        --debian-installer none \
+        --linux-packages "linux-image" \
+        --apt-recommends true \
+        --cache true
 
 retro_ok "live-build config generated."
 
