@@ -42,9 +42,35 @@ _need_display() {
     fi
 }
 
+show_banner() {
+    echo -e "${C_GREEN}"
+    cat << 'BANNER'
+RRRRRRRRRRRRRRRRR   EEEEEEEEEEEEEEEEEEEEEETTTTTTTTTTTTTTTTTTTTTTTRRRRRRRRRRRRRRRRR        OOOOOOOOO          
+R::::::::::::::::R  E::::::::::::::::::::ET:::::::::::::::::::::TR::::::::::::::::R     OO:::::::::OO        
+R::::::RRRRRR:::::R E::::::::::::::::::::ET:::::::::::::::::::::TR::::::RRRRRR:::::R  OO:::::::::::::OO      
+RR:::::R     R:::::REE::::::EEEEEEEEE::::ET:::::TT:::::::TT:::::TRR:::::R     R:::::RO:::::::OOO:::::::O     
+  R::::R     R:::::R  E:::::E       EEEEEETTTTTT  T:::::T  TTTTTT  R::::R     R:::::RO::::::O   O::::::O     
+  R::::R     R:::::R  E:::::E                     T:::::T          R::::R     R:::::RO:::::O     O:::::O     
+  R::::RRRRRR:::::R   E::::::EEEEEEEEEE           T:::::T          R::::RRRRRR:::::R O:::::O     O:::::O     
+  R:::::::::::::RR    E:::::::::::::::E           T:::::T          R:::::::::::::RR  O:::::O     O:::::O     
+  R::::RRRRRR:::::R   E:::::::::::::::E           T:::::T          R::::RRRRRR:::::R O:::::O     O:::::O     
+  R::::R     R:::::R  E::::::EEEEEEEEEE           T:::::T          R::::R     R:::::RO:::::O     O:::::O     
+  R::::R     R:::::R  E:::::E                     T:::::T          R::::R     R:::::RO:::::O     O:::::O     
+  R::::R     R:::::R  E:::::E       EEEEEE        T:::::T          R::::R     R:::::RO::::::O   O::::::O     
+RR:::::R     R:::::REE::::::EEEEEEEE:::::E      TT:::::::TT      RR:::::R     R:::::RO:::::::OOO:::::::O     
+R::::::R     R:::::RE::::::::::::::::::::E      T:::::::::T      R::::::R     R:::::R OO:::::::::::::OO      
+R::::::R     R:::::RE::::::::::::::::::::E      T:::::::::T      R::::::R     R:::::R   OO:::::::::OO        
+RRRRRRRR     RRRRRRREEEEEEEEEEEEEEEEEEEEEE      TTTTTTTTTTT      RRRRRRRR     RRRRRRR     OOOOOOOOO          
+BANNER
+    echo -e "${C_CYAN}                                                                                         [ v1.0 ]${C_RESET}"
+    echo -e "${C_BOLD}  ================================================================================================${C_RESET}"
+    echo -e "${C_GREEN}                                    Founder: Shan CM${C_RESET}"
+    echo -e "${C_BOLD}  ================================================================================================${C_RESET}\n"
+}
+
 usage() {
+    show_banner
     cat << USAGE
-${C_BOLD}Retro OS CLI${C_RESET} v${RETRO_VERSION}
 
 Usage: retro <command> [args]
 
