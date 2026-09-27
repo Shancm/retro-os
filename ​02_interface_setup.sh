@@ -188,4 +188,49 @@ KDEG
 
 retro_ok "Plasma theme defaults deployed."
 
+# -----------------------------------------------------------------------------
+# 6. Default terminal emulator & live-user group permissions
+# -----------------------------------------------------------------------------
+retro_info "Setting Kitty as default system terminal..."
+if is_command update-alternatives && is_command kitty; then
+    update-alternatives --install /usr/bin/x-terminal-emulator x-terminal-emulator /usr/bin/kitty 50 >/dev/null 2>&1 || true
+    update-alternatives --set x-terminal-emulator /usr/bin/kitty >/dev/null 2>&1 || true
+fi
+
+# Set Kitty as the default terminal emulator inside KDE Plasma
+if [[ -n "${TARGET_HOME:-}" && -d "${TARGET_HOME}" ]]; then
+    mkdir -p "${TARGET_HOME}/.config" "${SKEL_DIR}/.config"
+    for target in "${TARGET_HOME}/.config/kdeglobals" "${SKEL_DIR}/.config/kdeglobals"; do
+        if [[ -f "${target}" ]]; then
+            sed -i '/^\[General\]/a TerminalApplication=kitty\nTerminalService=kitty.desktop' "${target}" 2>/dev/null || true
+        else
+            cat >> "${target}" << 'KDECONF'
+[General]
+TerminalApplication=kitty
+TerminalService=kitty.desktop
+KDECONF
+        fi
+    done
+fi
+
+retro_info "Configuring hardware and audio permissions for user..."
+# Target both the resolved system user and the fallback live user
+USERS_TO_CONFIGURE=()
+[[ -n "${TARGET_USER:-}" && "${TARGET_USER}" != "root" ]] && USERS_TO_CONFIGURE+=("${TARGET_USER}")
+[[ "${TARGET_USER}" != "retro" ]] && USERS_TO_CONFIGURE+=("retro")
+
+TARGET_GROUPS=(sudo video audio input render netdev plugdev)
+
+for u in "${USERS_TO_CONFIGURE[@]}"; do
+    if id "${u}" &>/dev/null; then
+        for grp in "${TARGET_GROUPS[@]}"; do
+            if getent group "${grp}" &>/dev/null; then
+                usermod -aG "${grp}" "${u}" 2>/dev/null || true
+            fi
+        done
+        retro_ok "Configured permissions and groups for user: ${u}"
+    fi
+done
+
+
 retro_ok "=== Interface setup complete. ==="
