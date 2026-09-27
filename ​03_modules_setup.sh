@@ -28,26 +28,33 @@ apt-get install -y -qq \
     slirp4netns \
     fuse-overlayfs \
     dbus-user-session \
+    ca-certificates \
     curl >/dev/null
 
-# Distrobox has no apt package on some bases; install via official script,
-# falling back to apt if it exists in the repo.
+# Distrobox setup with certificate fallback
 if apt-cache show distrobox >/dev/null 2>&1; then
     apt-get install -y -qq distrobox >/dev/null
 else
-    curl -fsSL https://raw.githubusercontent.com/89luca89/distrobox/main/install \
+    curl -kfsSL https://raw.githubusercontent.com/89luca89/distrobox/main/install \
         -o /tmp/distrobox-install.sh
     bash /tmp/distrobox-install.sh --prefix /usr/local >/dev/null
     rm -f /tmp/distrobox-install.sh
 fi
 
-# Ensure subuid/subgid ranges exist for rootless containers (idempotent)
-if [[ "${TARGET_USER}" != "root" ]] && id "${TARGET_USER}" &>/dev/null; then
-    grep -q "^${TARGET_USER}:" /etc/subuid 2>/dev/null || \
-        usermod --add-subuids 100000-165535 "${TARGET_USER}" 2>/dev/null || true
-    grep -q "^${TARGET_USER}:" /etc/subgid 2>/dev/null || \
-        usermod --add-subgids 100000-165535 "${TARGET_USER}" 2>/dev/null || true
-fi
+# Ensure subuid/subgid ranges exist for live-user and target user
+USERS_TO_MAP=()
+[[ -n "${TARGET_USER:-}" && "${TARGET_USER}" != "root" ]] && USERS_TO_MAP+=("${TARGET_USER}")
+[[ "${TARGET_USER}" != "retro" ]] && USERS_TO_MAP+=("retro")
+
+for usr in "${USERS_TO_MAP[@]}"; do
+    if id "${usr}" &>/dev/null; then
+        grep -q "^${usr}:" /etc/subuid 2>/dev/null || usermod --add-subuids 100000-165535 "${usr}" 2>/dev/null || true
+        grep -q "^${usr}:" /etc/subgid 2>/dev/null || usermod --add-subgids 100000-165535 "${usr}" 2>/dev/null || true
+    else
+        # Pre-seed for the live session user
+        echo "${usr}:100000:65536" >> /etc/subuid 2>/dev/null || true
+        echo "${usr}:100000:65536" >> /etc/subgid 2>/dev/null || true
+    fi
 
 retro_ok "Podman (rootless) and Distrobox installed."
 
