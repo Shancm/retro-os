@@ -109,18 +109,18 @@ fi
 retro_ok "sysctl tuning written to ${SYSCTL_FILE}."
 
 # -----------------------------------------------------------------------------
-# 5. Btrfs + Snapper rollback support (GUARDED - only runs on genuine Btrfs)
+# 5. Btrfs + Snapper rollback support (GUARDED - packages always baked in)
 # -----------------------------------------------------------------------------
-retro_info "Checking root filesystem type before enabling Snapper..."
+retro_info "Installing Btrfs and Snapper tools into base image..."
+export DEBIAN_FRONTEND=noninteractive
+apt-get install -y -qq snapper btrfs-progs grub-btrfs inotify-tools >/dev/null
+
+retro_info "Checking root filesystem type for Snapper configuration..."
 
 if is_btrfs_root; then
     retro_ok "Root filesystem is Btrfs - configuring Snapper rollback support."
 
-    apt-get install -y -qq snapper btrfs-progs grub-btrfs inotify-tools >/dev/null
-
     if [[ ! -e /etc/snapper/configs/root ]]; then
-        # snapper create-config fails if a snapper subvolume layout doesn't
-        # already exist; guard so a re-run never crashes.
         if snapper -c root create-config / 2>/dev/null; then
             retro_ok "Snapper 'root' config created."
         else
@@ -151,7 +151,7 @@ if is_btrfs_root; then
 
     retro_ok "Btrfs/Snapper rollback support configured."
 else
-    retro_warn "Root filesystem is NOT Btrfs - skipping Snapper setup entirely (no crash, by design)."
+    retro_warn "Root filesystem is NOT Btrfs at build time - packages installed successfully; setup deferred to runtime."
 fi
 
 retro_ok "=== Engine setup complete. ==="
