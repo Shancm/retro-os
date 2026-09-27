@@ -30,7 +30,7 @@ else
     is_btrfs_root(){ [[ "$(findmnt -n -o FSTYPE / 2>/dev/null)" == "btrfs" ]]; }
 fi
 
-RETRO_VERSION="1.0"
+export RETRO_VERSION="1.0"
 
 # -----------------------------------------------------------------------------
 # Helper: require a real (non-root-owned-only) desktop session for GUI bits
