@@ -91,7 +91,7 @@ mkdir -p config/includes.chroot/opt/retro-os
 # into the chroot filesystem so hooks can source config.env at build time.
 cp -a "${SCRIPT_DIR}"/*.sh "${SCRIPT_DIR}/config.env" "${SCRIPT_DIR}/retro" \
     config/includes.chroot/opt/retro-os/ 2>/dev/null || true
-chmod +x config/includes.chroot/opt/retro-os/*.sh
+chmod +x config/includes.chroot/opt/retro-os/*.sh config/includes.chroot/opt/retro-os/retro
 
 write_hook() {
     local hook_name="$1"
