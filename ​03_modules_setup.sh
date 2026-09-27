@@ -55,6 +55,7 @@ for usr in "${USERS_TO_MAP[@]}"; do
         echo "${usr}:100000:65536" >> /etc/subuid 2>/dev/null || true
         echo "${usr}:100000:65536" >> /etc/subgid 2>/dev/null || true
     fi
+done 
 
 retro_ok "Podman (rootless) and Distrobox installed."
 
