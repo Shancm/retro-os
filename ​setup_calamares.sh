@@ -139,12 +139,11 @@ strings:
     supportUrl:           "https://example.invalid/retro-os/support"
     releaseNotesUrl:      "https://example.invalid/retro-os/notes"
 
-images:
-    productLogo:          "logo.png"
-    productIcon:           "logo.png"
-    productWelcome:        "welcome.png"
-
-slideshow:                "show.qml"
+# images:
+#    productLogo:          "logo.png"
+#    productIcon:           "logo.png"
+#    productWelcome:        "welcome.png"
+# slideshow:                "show.qml"
 
 style:
    sidebarBackground:     "${RETRO_BG_COLOR}"
