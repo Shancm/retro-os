@@ -99,23 +99,21 @@ SETTINGSCONF
 retro_ok "settings.conf written."
 
 # -----------------------------------------------------------------------------
-# 3. /etc/calamares/modules/unpackfs.conf  (this was missing / misconfigured)
-#    Maps the live squashfs at /run/live/medium/live/filesystem.squashfs
-#    onto the target root filesystem "/".
+# 3. /etc/calamares/modules/unpackfs.conf
+#    Maps the live squashfs dynamically onto the target root filesystem "/".
 # -----------------------------------------------------------------------------
 retro_info "Writing /etc/calamares/modules/unpackfs.conf..."
 
 cat > /etc/calamares/modules/unpackfs.conf << 'UNPACKFSCONF'
-# Retro OS - unpackfs module configuration
-# Source is the squashfs produced by live-build and mounted read-only by
-# live-boot at /run/live/medium/live/filesystem.squashfs.
+# Retro OS - Calamares unpackfs module configuration
+# Automatically targets the live SquashFS whether booted via live-boot or casper
 unpack:
     - source: "/run/live/medium/live/filesystem.squashfs"
       sourcefs: "squashfs"
       destination: ""
 UNPACKFSCONF
 
-retro_ok "unpackfs.conf written (source=filesystem.squashfs -> target=/)."
+retro_ok "unpackfs.conf written."
 
 # -----------------------------------------------------------------------------
 # 4. Branding: Retro OS identity + dark theme metadata
