@@ -257,7 +257,7 @@ cmd_panic() {
 
 require_root_soft() {
     if [[ "${EUID}" -ne 0 ]]; then
-        retro_die "This action requires root. Re-run with: sudo retro $*"
+        retro_die "This action requires root. Re-run with: sudo retro ${cmd:-}"
     fi
 }
 
