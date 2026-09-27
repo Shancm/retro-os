@@ -81,7 +81,6 @@ sequence:
   - services-systemd
   - packages
   - bootloader
-  - grubcfg
   - umount
 - show:
   - finished
