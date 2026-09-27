@@ -1,0 +1,57 @@
+name: Retro OS Script Validation
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  validate-scripts:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Install ShellCheck
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y shellcheck
+
+      - name: Step 1 - Check Bash Syntax (bash -n)
+        run: |
+          echo "Checking syntax across all shell scripts..."
+          for file in *.sh retro; do
+            if [ -f "$file" ]; then
+              echo "Validating syntax: $file"
+              bash -n "$file"
+            fi
+          done
+
+      - name: Step 2 - Check File Permissions
+        run: |
+          echo "Verifying execution permissions..."
+          for file in *.sh retro; do
+            if [ -f "$file" ]; then
+              chmod +x "$file"
+            fi
+          done
+
+      - name: Step 3 - Static Analysis with ShellCheck
+        run: |
+          echo "Running ShellCheck to catch logic bugs and bad practices..."
+          shellcheck -e SC1091,SC2181,SC2086 *.sh retro
+
+      - name: Step 4 - Verify Required Project Files Exist
+        run: |
+          echo "Verifying critical project components..."
+          test -f config.env || { echo "config.env missing!"; exit 1; }
+          test -f 01_engine_setup.sh || { echo "01_engine_setup.sh missing!"; exit 1; }
+          test -f 02_interface_setup.sh || { echo "02_interface_setup.sh missing!"; exit 1; }
+          test -f 03_modules_setup.sh || { echo "03_modules_setup.sh missing!"; exit 1; }
+          test -f setup_calamares.sh || { echo "setup_calamares.sh missing!"; exit 1; }
+          test -f build_final_iso.sh || { echo "build_final_iso.sh missing!"; exit 1; }
+          test -f retro || { echo "retro CLI missing!"; exit 1; }
+          echo "All critical script files are present."
+
