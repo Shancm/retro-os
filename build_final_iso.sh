@@ -71,7 +71,7 @@ cd "${BUILD_DIR}"
         --iso-application "Retro OS" \
         --iso-volume "RETRO_OS" \
         --iso-publisher "Retro OS Project" \
-        --linux-packages "linux-image-generic" \
+        --linux-flavours "generic" \
         --apt-recommends true \
         --cache true
 
