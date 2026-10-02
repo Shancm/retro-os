@@ -121,12 +121,25 @@ cmd_kali() {
         retro_die "distrobox is not installed."
     fi
 
+    # Check if the container already exists
     if ! distrobox list 2>/dev/null | grep -q "retro-kali"; then
-        retro_info "Kali container not found - creating it now (this may take a while)..."
+        retro_warn "Kali container 'retro-kali' not found."
+        retro_info "Initial setup requires downloading the Kali Linux rolling image (~2-3GB)."
+
+        # Network connectivity check
+        retro_info "Verifying internet connection..."
+        if ! ping -c 1 8.8.8.8 >/dev/null 2>&1; then
+            retro_die "No internet connection detected. Please connect to the internet and run 'retro kali' again."
+        fi
+
+        retro_ok "Network connection verified."
+        retro_info "Creating and downloading 'retro-kali' container. Please wait..."
+        
         distrobox create --name retro-kali --image kalilinux/kali-rolling:latest --yes
+        retro_ok "Kali container created successfully."
     fi
 
-    # Pass through both Wayland and X11 sockets so it works on either session type.
+    # Pass-through Wayland & X11 display sockets safely
     local extra_env=()
     [[ -n "${WAYLAND_DISPLAY:-}" ]] && extra_env+=(--additional-flags "--env WAYLAND_DISPLAY=${WAYLAND_DISPLAY}")
     [[ -n "${DISPLAY:-}" ]] && extra_env+=(--additional-flags "--env DISPLAY=${DISPLAY}")
