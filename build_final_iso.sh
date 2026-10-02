@@ -69,7 +69,7 @@ cd "${BUILD_DIR}"
         --binary-images iso-hybrid \
         --archive-areas "main restricted universe multiverse" \
         --bootappend-live "boot=live components username=retro hostname=retro-os quiet splash" \
-        --bootloaders "syslinux,grub-efi" \
+        --bootloader "syslinux,grub-efi" \
         --iso-application "Retro OS" \
         --iso-volume "RETRO_OS" \
         --iso-publisher "Retro OS Project" \
