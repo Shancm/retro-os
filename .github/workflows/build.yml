@@ -1,4 +1,4 @@
-name: Build ISO
+name: Build Retro OS v1.1
 
 on:
   workflow_dispatch:
@@ -41,5 +41,5 @@ jobs:
       - name: Upload ISO
         uses: actions/upload-artifact@v4
         with:
-          name: Retro-OS-ISO
+          name: Retro-OS-v1.1-ISO
           path: output/*.iso
