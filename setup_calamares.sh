@@ -106,14 +106,34 @@ retro_info "Writing /etc/calamares/modules/unpackfs.conf..."
 
 cat > /etc/calamares/modules/unpackfs.conf << 'UNPACKFSCONF'
 # Retro OS - Calamares unpackfs module configuration
-# Automatically targets the live SquashFS whether booted via live-boot or casper
+# Live-build mount path compatibility
 unpack:
-    - source: "/run/live/medium/live/filesystem.squashfs"
+    - source: "/lib/live/mount/medium/live/filesystem.squashfs"
       sourcefs: "squashfs"
       destination: ""
 UNPACKFSCONF
 
-retro_ok "unpackfs.conf written."
+# Live medium symlink fix (both /run/live and /lib/live supported)
+mkdir -p /etc/systemd/system
+cat > /etc/systemd/system/calamares-medium-fix.service << 'SERVICE'
+[Unit]
+Description=Fix Live Media Mount Path for Calamares
+DefaultDependencies=no
+After=local-fs.target
+
+[Service]
+Type=oneshot
+ExecStart=/bin/sh -c 'if [ -d /lib/live/mount/medium ] && [ ! -d /run/live/medium ]; then mkdir -p /run/live && ln -sf /lib/live/mount/medium /run/live/medium; fi'
+
+[Install]
+WantedBy=multi-user.target
+SERVICE
+
+if is_command systemctl; then
+    systemctl enable calamares-medium-fix.service >/dev/null 2>&1 || true
+fi
+
+retro_ok "unpackfs.conf and path compatibility service configured."
 
 # -----------------------------------------------------------------------------
 # 4. Branding: Retro OS identity + dark theme metadata
