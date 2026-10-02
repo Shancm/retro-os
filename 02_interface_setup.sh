@@ -232,5 +232,11 @@ for u in "${USERS_TO_CONFIGURE[@]}"; do
     fi
 done
 
+# Passwordless sudo for the live session user
+retro_info "Configuring passwordless sudo for live session..."
+mkdir -p /etc/sudoers.d
+echo "retro ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/retro-live
+chmod 0440 /etc/sudoers.d/retro-live
+retro_ok "Live user passwordless sudo enabled."
 
 retro_ok "=== Interface setup complete. ==="
