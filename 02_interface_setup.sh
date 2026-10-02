@@ -36,7 +36,7 @@ apt-get install -y -qq \
     fonts-noto \
     firefox \
     ubuntu-drivers-common \
-    >/dev/null
+    linux-firmware >/dev/null
 
 systemctl set-default graphical.target >/dev/null 2>&1 || true
 if is_command systemctl; then
