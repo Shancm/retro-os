@@ -48,6 +48,8 @@ apt-get install -y -qq \
     dosfstools \
     squashfs-tools \
     isolinux \
+    syslinux \
+    syslinux-common \
     syslinux-utils \
     >/dev/null
 
@@ -64,10 +66,10 @@ cd "${BUILD_DIR}"
     lb config \
         --distribution noble \
         --architecture amd64 \
-        --binary-images iso \
+        --binary-images iso-hybrid \
         --archive-areas "main restricted universe multiverse" \
         --bootappend-live "boot=live components username=retro hostname=retro-os quiet splash" \
-        --bootloader "grub-efi" \
+        --bootloaders "syslinux,grub-efi" \
         --iso-application "Retro OS" \
         --iso-volume "RETRO_OS" \
         --iso-publisher "Retro OS Project" \
