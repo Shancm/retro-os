@@ -80,7 +80,7 @@ sequence:
   - hwclock
   - services-systemd
   - packages
-  -initramfs
+  - initramfs
   - bootloader
   - umount
 - show:
