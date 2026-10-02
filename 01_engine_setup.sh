@@ -104,25 +104,31 @@ cat > "${SYSCTL_FILE}" << 'SYSCTL'
 # Managed by Retro OS - 01_engine_setup.sh
 # Low-latency / desktop-responsiveness tuning
 
-# Reduce swappiness since ZRAM absorbs most swap pressure cheaply
+# Increase swappiness to aggressively prioritize ZRAM over RAM exhaustion
 vm.swappiness=100
 vm.page-cluster=0
 vm.vfs_cache_pressure=50
 
-# Reduce write-back latency spikes
+# Reduce write-back latency spikes on desktop/storage
 vm.dirty_ratio=10
 vm.dirty_background_ratio=5
 
 # Scheduler responsiveness (autogroup helps desktop interactivity)
 kernel.sched_autogroup_enabled=1
 
-# Network snappiness for tactical/field use
+# Network snappiness and bufferbloat mitigation
 net.ipv4.tcp_fastopen=3
 net.core.default_qdisc=fq
+net.ipv4.tcp_congestion_control=bbr
 SYSCTL
 
+# Apply live only if running on a real booted host (skip in chroot)
 if is_command sysctl; then
-    sysctl --system >/dev/null 2>&1 || retro_warn "sysctl --system failed to apply live (normal in chroot); will apply on boot."
+    if [[ -d /run/systemd/system ]] && ! systemd-detect-virt --chroot >/dev/null 2>&1; then
+        sysctl --system >/dev/null 2>&1 || retro_warn "Failed to apply sysctl parameters live."
+    else
+        retro_info "Chroot detected: sysctl settings written and will apply automatically on first boot."
+    fi
 fi
 
 retro_ok "sysctl tuning written to ${SYSCTL_FILE}."
