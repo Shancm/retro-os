@@ -165,12 +165,18 @@ if is_btrfs_root; then
             /etc/snapper/configs/root 2>/dev/null || true
     fi
 
+    # Chroot-safe timer enablement
     if is_command systemctl; then
-        systemctl enable --now snapper-timeline.timer snapper-cleanup.timer >/dev/null 2>&1 || \
-            retro_warn "Snapper timers could not be started now; will activate on next boot."
+        systemctl enable snapper-timeline.timer snapper-cleanup.timer grub-btrfsd.service >/dev/null 2>&1 || true
+
+        if [[ -d /run/systemd/system ]] && ! systemd-detect-virt --chroot >/dev/null 2>&1; then
+            systemctl start snapper-timeline.timer snapper-cleanup.timer grub-btrfsd.service >/dev/null 2>&1 || true
+        else
+            retro_info "Chroot build detected: Snapper timers enabled and will initialize on first boot."
+        fi
     fi
 
-    if is_command update-grub && dpkg -l | grep -q grub-btrfs; then
+    if is_command update-grub && dpkg-query -W -f='${Status}' grub-btrfs 2>/dev/null | grep -q "install ok installed"; then
         update-grub >/dev/null 2>&1 || retro_warn "update-grub failed (normal in a chroot build)."
     fi
 
@@ -184,15 +190,27 @@ fi
 # -----------------------------------------------------------------------------
 retro_info "Writing system identity to /etc/os-release..."
 
-cat > /etc/os-release << OSREL
+TARGET_OS_RELEASE="/usr/lib/os-release"
+[[ ! -d /usr/lib ]] && TARGET_OS_RELEASE="/etc/os-release"
+
+cat > "${TARGET_OS_RELEASE}" << OSREL
 NAME="${RETRO_OS_NAME}"
 VERSION="${RETRO_OS_VERSION}"
 ID=retro-os
-ID_LIKE=ubuntu
+ID_LIKE="ubuntu debian"
 PRETTY_NAME="${RETRO_OS_NAME} v${RETRO_OS_VERSION}"
 VERSION_ID="${RETRO_OS_VERSION}"
 HOME_URL="https://github.com/Shancm/retro-os"
+SUPPORT_URL="https://github.com/Shancm/retro-os/issues"
+BUG_REPORT_URL="https://github.com/Shancm/retro-os/issues"
 OSREL
+
+if [[ "${TARGET_OS_RELEASE}" == "/usr/lib/os-release" ]]; then
+    ln -sfn /usr/lib/os-release /etc/os-release
+fi
+
+echo "${RETRO_OS_NAME} v${RETRO_OS_VERSION} \n \l" > /etc/issue
+echo "${RETRO_OS_NAME} v${RETRO_OS_VERSION}" > /etc/issue.net
 
 retro_ok "System identity updated with version ${RETRO_OS_VERSION}."
 
