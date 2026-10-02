@@ -47,11 +47,18 @@ PERCENTAGE=50
 PRIORITY=100
 ZCONF
 
+# Chroot-safe service enablement:
 if is_command systemctl; then
-    systemctl enable --now zramswap.service >/dev/null 2>&1 || \
-        retro_warn "zramswap.service could not be started (may be normal inside a chroot build)."
+    systemctl enable zramswap.service >/dev/null 2>&1 || true
+    
+    # Check if booted under active systemd and not inside a chroot
+    if [[ -d /run/systemd/system ]] && ! systemd-detect-virt --chroot >/dev/null 2>&1; then
+        systemctl start zramswap.service >/dev/null 2>&1 || true
+    else
+        retro_info "Chroot build detected: zramswap enabled and will initialize on first boot."
+    fi
 else
-    retro_warn "systemctl not available (chroot build environment) - zramswap will activate on first real boot."
+    retro_warn "systemctl not available; zramswap will activate on first real boot."
 fi
 
 retro_ok "ZRAM configured."
