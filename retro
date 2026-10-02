@@ -293,7 +293,7 @@ cmd_update() {
     mkdir -p /opt/retro-os/retro-companion
 
     # Fetch updated CLI script without touching user files in /home
-    curl -fsSL "https://raw.githubusercontent.com/<YOUR_USER>/<YOUR_REPO>/main/retro" -o /usr/local/bin/retro
+    curl -fsSL "https://raw.githubusercontent.com/Shancm/retro-os/main/retro" -o /usr/local/bin/retro
     chmod +x /usr/local/bin/retro
 
     retro_ok "Retro OS successfully updated to v2.0! User data preserved."
