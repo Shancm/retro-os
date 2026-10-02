@@ -42,8 +42,8 @@ fi
 
 cat > "${ZRAM_CONF}" << 'ZCONF'
 # Managed by Retro OS - 01_engine_setup.sh
-ALGO=zstd
-PERCENT=50
+ALGORITHM=zstd
+PERCENTAGE=50
 PRIORITY=100
 ZCONF
 
