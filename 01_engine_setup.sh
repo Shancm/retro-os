@@ -154,4 +154,21 @@ else
     retro_warn "Root filesystem is NOT Btrfs at build time - packages installed successfully; setup deferred to runtime."
 fi
 
+# -----------------------------------------------------------------------------
+# 6. Update system-wide OS identity and dynamic version (/etc/os-release)
+# -----------------------------------------------------------------------------
+retro_info "Writing system identity to /etc/os-release..."
+
+cat > /etc/os-release << OSREL
+NAME="${RETRO_OS_NAME}"
+VERSION="${RETRO_OS_VERSION}"
+ID=retro-os
+ID_LIKE=ubuntu
+PRETTY_NAME="${RETRO_OS_NAME} v${RETRO_OS_VERSION}"
+VERSION_ID="${RETRO_OS_VERSION}"
+HOME_URL="https://github.com/Shancm/retro-os"
+OSREL
+
+retro_ok "System identity updated with version ${RETRO_OS_VERSION}."
+
 retro_ok "=== Engine setup complete. ==="
