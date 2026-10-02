@@ -69,15 +69,27 @@ retro_ok "ZRAM configured."
 retro_info "Configuring EarlyOOM anti-freeze daemon..."
 
 EARLYOOM_CONF="/etc/default/earlyoom"
+if [[ -f "${EARLYOOM_CONF}" ]]; then
+    cp -a "${EARLYOOM_CONF}" "${EARLYOOM_CONF}.bak.$(date +%s)" 2>/dev/null || true
+fi
+
 cat > "${EARLYOOM_CONF}" << 'EOOM'
 # Managed by Retro OS - 01_engine_setup.sh
 # Kill the biggest offending process before the system fully freezes.
-EARLYOOM_ARGS="-r 60 -m 8 -s 8 --avoid '(^|/)(sshd|systemd|Xorg|kwin_wayland|plasmashell)$' -g"
+EARLYOOM_ARGS="-r 60 -m 8 -s 8 --avoid '(^|/)(sshd|systemd|dbus-daemon|Xorg|kwin_wayland|plasmashell|gnome-shell|pipewire)$' -g"
 EOOM
 
+# Chroot-safe service enablement
 if is_command systemctl; then
-    systemctl enable --now earlyoom.service >/dev/null 2>&1 || \
-        retro_warn "earlyoom.service could not be started now; it will start on next boot."
+    systemctl enable earlyoom.service >/dev/null 2>&1 || true
+
+    if [[ -d /run/systemd/system ]] && ! systemd-detect-virt --chroot >/dev/null 2>&1; then
+        systemctl start earlyoom.service >/dev/null 2>&1 || true
+    else
+        retro_info "Chroot build detected: earlyoom enabled and will initialize on first boot."
+    fi
+else
+    retro_warn "systemctl not available; earlyoom will activate on first real boot."
 fi
 
 retro_ok "EarlyOOM configured."
