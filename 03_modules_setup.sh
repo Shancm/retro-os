@@ -118,6 +118,18 @@ apt-get install -y -qq \
 
 retro_ok "Modern CLI toolkit installed."
 
+# -----------------------------------------------------------------------------
+# 5. Retro AI engine dependencies (PyQt6 GUI, telemetry, voice alert)
+# -----------------------------------------------------------------------------
+retro_info "Installing Retro AI engine prerequisites..."
+apt-get install -y -qq \
+    python3-pyqt6 \
+    python3-psutil \
+    espeak-ng \
+    curl >/dev/null
+
+retro_ok "Retro AI dependencies installed."
+
 apt-get autoremove -y -qq >/dev/null 2>&1 || true
 apt-get clean -qq >/dev/null 2>&1 || true
 
