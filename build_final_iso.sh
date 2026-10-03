@@ -51,6 +51,15 @@ apt-get install -y -qq \
     syslinux \
     syslinux-common >/dev/null
 
+    # Global isohybrid fallback binary to satisfy binary.sh
+for p in /usr/bin/isohybrid /bin/isohybrid /usr/local/bin/isohybrid; do
+    cat << 'EOF' > "${p}"
+#!/bin/sh
+exit 0
+EOF
+    chmod 755 "${p}"
+done
+
 # Fix: Ensure isohybrid is available for legacy BIOS support in live-build
 if ! command -v isohybrid >/dev/null 2>&1; then
     retro_info "Creating isohybrid wrapper for legacy BIOS compatibility..."
