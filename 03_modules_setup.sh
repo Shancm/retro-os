@@ -66,9 +66,13 @@ retro_info "Configuring UFW firewall (default-deny incoming)..."
 apt-get install -y -qq ufw >/dev/null
 
 ufw --force reset >/dev/null 2>&1 || true
-ufw default deny incoming >/dev/null 2>&1 || retro_warn "ufw default deny incoming failed (chroot, no kernel netfilter - normal)."
-ufw default allow outgoing >/dev/null 2>&1 || true
-ufw allow ssh >/dev/null 2>&1 || true
+if [[ "${RETRO_CHROOT_BUILD:-0}" != "1" ]]; then
+    ufw default deny incoming >/dev/null 2>&1 || true
+    ufw default allow outgoing >/dev/null 2>&1 || true
+    ufw allow ssh >/dev/null 2>&1 || true
+else
+    retro_warn "Chroot build: UFW rule configuration skipped until first boot."
+fi
 
 if is_command systemctl; then
     systemctl enable ufw.service >/dev/null 2>&1 || true
