@@ -64,6 +64,19 @@ fi
 
 retro_ok "Host build dependencies installed."
 
+create_isohybrid_stub() {
+    local target_path="$1"
+    cat << 'EOF' > "${target_path}"
+#!/bin/sh
+exit 0
+EOF
+    chmod +x "${target_path}"
+}
+
+create_isohybrid_stub "/usr/bin/isohybrid"
+create_isohybrid_stub "/usr/local/bin/isohybrid"
+create_isohybrid_stub "/bin/isohybrid"
+
 # -----------------------------------------------------------------------------
 # 2. Fresh build tree
 # -----------------------------------------------------------------------------
