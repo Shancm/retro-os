@@ -40,8 +40,7 @@ apt-get install -y -qq \
 
 systemctl set-default graphical.target >/dev/null 2>&1 || true
 if is_command systemctl; then
-    systemctl enable sddm.service >/dev/null 2>&1 || \
-        retro_warn "sddm.service could not be enabled now (normal in chroot); will enable on boot."
+    systemctl enable sddm.service >/dev/null 2>&1 || true
 fi
 
 retro_ok "KDE Plasma (Wayland) + SDDM installed."
@@ -75,10 +74,9 @@ deploy_config() {
     mkdir -p "$(dirname "${user_target}")"
     cp -a "${skel_target}" "${user_target}"
 
-    # Recursively fix ownership for both files and created parent directories
+    # Assign immediate ownership to the specific file
     if [[ "${EUID}" -eq 0 && "${TARGET_USER}" != "root" ]] && id "${TARGET_USER}" &>/dev/null; then
-        [[ -d "${TARGET_HOME}/.config" ]] && chown -R "${TARGET_USER}:${TARGET_USER}" "${TARGET_HOME}/.config" 2>/dev/null || true
-        [[ -d "${TARGET_HOME}/.local" ]] && chown -R "${TARGET_USER}:${TARGET_USER}" "${TARGET_HOME}/.local" 2>/dev/null || true
+        chown "${TARGET_USER}:${TARGET_USER}" "${user_target}" 2>/dev/null || true
     fi
 }
 
@@ -169,11 +167,13 @@ if is_command update-desktop-database; then
     fi
 fi
 
-# Refresh KDE Sycoca application cache if available
-if is_command kbuildsycoca6; then
-    kbuildsycoca6 --noincremental >/dev/null 2>&1 || true
-elif is_command kbuildsycoca5; then
-    kbuildsycoca5 --noincremental >/dev/null 2>&1 || true
+# Refresh KDE Sycoca application cache cleanly if running live as target user
+if [[ "${TARGET_USER}" != "root" ]] && id "${TARGET_USER}" &>/dev/null; then
+    if is_command kbuildsycoca6; then
+        su - "${TARGET_USER}" -c "kbuildsycoca6 --noincremental" >/dev/null 2>&1 || true
+    elif is_command kbuildsycoca5; then
+        su - "${TARGET_USER}" -c "kbuildsycoca5 --noincremental" >/dev/null 2>&1 || true
+    fi
 fi
 
 retro_ok "Keybindings and launchers deployed."
@@ -223,7 +223,12 @@ KDECONF
     done
 fi
 
-# Final sweeping ownership fix for all directories and files
+# Ensure standard readable permissions for future users in skeleton
+if [[ -d "${SKEL_DIR}" ]]; then
+    chmod -R u=rwX,go=rX "${SKEL_DIR}" 2>/dev/null || true
+fi
+
+# Final single-pass recursive ownership fix for the target user directory
 if [[ "${EUID}" -eq 0 && -n "${TARGET_USER:-}" && "${TARGET_USER}" != "root" ]] && id "${TARGET_USER}" &>/dev/null; then
     [[ -d "${TARGET_HOME}/.config" ]] && chown -R "${TARGET_USER}:${TARGET_USER}" "${TARGET_HOME}/.config" 2>/dev/null || true
     [[ -d "${TARGET_HOME}/.local" ]] && chown -R "${TARGET_USER}:${TARGET_USER}" "${TARGET_HOME}/.local" 2>/dev/null || true
