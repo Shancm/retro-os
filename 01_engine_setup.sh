@@ -223,7 +223,7 @@ if [[ "${TARGET_OS_RELEASE}" == "/usr/lib/os-release" ]]; then
     ln -sfn /usr/lib/os-release /etc/os-release
 fi
 
-echo "${RETRO_OS_NAME} v${RETRO_OS_VERSION} \n \l" > /etc/issue
+echo -e "${RETRO_OS_NAME} v${RETRO_OS_VERSION} \\n \\l" > /etc/issue
 echo "${RETRO_OS_NAME} v${RETRO_OS_VERSION}" > /etc/issue.net
 
 retro_ok "System identity updated with version ${RETRO_OS_VERSION}."
