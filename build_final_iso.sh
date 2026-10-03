@@ -36,6 +36,9 @@ fi
 retro_info "Installing live-build host dependencies..."
 export DEBIAN_FRONTEND=noninteractive
 apt-get update -qq
+apt-get install -y -qq software-properties-common >/dev/null
+add-apt-repository -y universe >/dev/null 2>&1 || true
+apt-get update -qq
 apt-get install -y -qq \
     live-build \
     live-config \
