@@ -279,7 +279,12 @@ cmd_panic() {
     if is_command nmcli; then
         nmcli networking off 2>/dev/null || true
     fi
-    ip link set dev "$(ip route | awk '/default/ {print $5; exit}')" down 2>/dev/null || true
+    local def_iface
+    def_iface="$(ip -4 route show default 2>/dev/null | awk '{print $5}' | head -n1)"
+    if [[ -n "${def_iface}" ]]; then
+        ip link set dev "${def_iface}" down 2>/dev/null || true
+    fi
+
     retro_warn "Network interfaces brought down."
 
     if mountpoint -q "${RETRO_BURNER_DIR}" 2>/dev/null; then
