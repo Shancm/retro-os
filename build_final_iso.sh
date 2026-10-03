@@ -155,6 +155,12 @@ retro_ok "Chroot hooks installed (0100 -> 0500, all sudo-free)."
 # -----------------------------------------------------------------------------
 retro_info "Starting live-build (this will take a while)..."
 lb clean --purge >/dev/null 2>&1 || true
+
+# Ensure isohybrid exists in chroot if directory is present
+if [[ -d "chroot/usr/bin" ]]; then
+    create_isohybrid_stub "chroot/usr/bin/isohybrid"
+fi
+
 lb build 2>&1 | tee -a "${RETRO_LOG_FILE}"
 
 if [[ ! -f "${BUILD_DIR}"/live-image-"${ARCH}".hybrid.iso ]]; then
