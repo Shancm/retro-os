@@ -101,6 +101,18 @@ retro_ok "EarlyOOM configured."
 # -----------------------------------------------------------------------------
 retro_info "Applying low-latency sysctl tweaks..."
 
+# 1. Ensure BBR and Fair Queueing modules load on boot
+mkdir -p /etc/modules-load.d
+cat > /etc/modules-load.d/bbr.conf << 'EOF'
+tcp_bbr
+sch_fq
+EOF
+
+# Load them live if on a running kernel (skip failures inside chroot)
+modprobe tcp_bbr 2>/dev/null || true
+modprobe sch_fq 2>/dev/null || true
+
+# 2. Write sysctl parameters
 SYSCTL_FILE="/etc/sysctl.d/99-retro-os-performance.conf"
 cat > "${SYSCTL_FILE}" << 'SYSCTL'
 # Managed by Retro OS - 01_engine_setup.sh
@@ -118,10 +130,10 @@ vm.dirty_background_ratio=5
 # Scheduler responsiveness (autogroup helps desktop interactivity)
 kernel.sched_autogroup_enabled=1
 
-# Network snappiness and bufferbloat mitigation
-net.ipv4.tcp_fastopen=3
+# Network snappiness and bufferbloat mitigation (BBR + FQ)
 net.core.default_qdisc=fq
 net.ipv4.tcp_congestion_control=bbr
+net.ipv4.tcp_fastopen=3
 SYSCTL
 
 # Apply live only if running on a real booted host (skip in chroot)
