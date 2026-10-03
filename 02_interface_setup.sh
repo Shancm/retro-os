@@ -63,11 +63,8 @@ retro_ok "Kitty / fonts / icons installed."
 
 # -----------------------------------------------------------------------------
 # 3. Deploy configs to BOTH /etc/skel (future users) AND $TARGET_HOME
-#    This is the critical fix - dual deployment so live-boot users AND the
-#    current installer/build user both get the theme.
 # -----------------------------------------------------------------------------
 deploy_config() {
-    # deploy_config <relative_path_under_home> <content_via_stdin>
     local rel_path="$1"
     local skel_target="${SKEL_DIR}/${rel_path}"
     local user_target="${TARGET_HOME}/${rel_path}"
@@ -78,8 +75,9 @@ deploy_config() {
     mkdir -p "$(dirname "${user_target}")"
     cp -a "${skel_target}" "${user_target}"
 
+    # Fix ownership for user
     if [[ "${EUID}" -eq 0 && "${TARGET_USER}" != "root" ]] && id "${TARGET_USER}" &>/dev/null; then
-        chown -R "${TARGET_USER}:${TARGET_USER}" "${TARGET_HOME}/.config" 2>/dev/null || true
+        chown "${TARGET_USER}:${TARGET_USER}" "${user_target}" 2>/dev/null || true
     fi
 }
 
@@ -118,8 +116,7 @@ KITTYCONF
 retro_ok "Kitty theme deployed."
 
 # -----------------------------------------------------------------------------
-# 4. System-wide keybindings via KGlobalShortcuts (kglobalshortcutsrc)
-#    Meta+Return -> retro term | Meta+M -> retro mon | Meta+K -> retro kali
+# 4. System-wide keybindings via KGlobalShortcuts
 # -----------------------------------------------------------------------------
 retro_info "Deploying system-wide keybindings..."
 
@@ -130,8 +127,6 @@ RetroMon=Meta+M,none,Launch Retro System Monitor
 RetroKali=Meta+K,none,Launch Retro Kali Container
 KEYBINDS
 
-# The custom global shortcuts need matching .desktop launcher entries so
-# KWin/KGlobalAccel has something to bind to.
 deploy_config ".local/share/applications/retro-term.desktop" << DESK1
 [Desktop Entry]
 Type=Application
@@ -165,10 +160,18 @@ NoDisplay=false
 X-KDE-GlobalShortcut=Meta+K
 DESK3
 
+# Refresh Desktop App Database
+if is_command update-desktop-database; then
+    update-desktop-database /usr/share/applications >/dev/null 2>&1 || true
+    if [[ -d "${TARGET_HOME}/.local/share/applications" ]]; then
+        update-desktop-database "${TARGET_HOME}/.local/share/applications" >/dev/null 2>&1 || true
+    fi
+fi
+
 retro_ok "Keybindings and launchers deployed."
 
 # -----------------------------------------------------------------------------
-# 5. Default look-and-feel: icons, dark color scheme, default terminal app
+# 5. Default look-and-feel
 # -----------------------------------------------------------------------------
 retro_info "Deploying Plasma theme defaults..."
 
@@ -189,7 +192,7 @@ KDEG
 retro_ok "Plasma theme defaults deployed."
 
 # -----------------------------------------------------------------------------
-# 6. Default terminal emulator & live-user group permissions
+# 6. Default terminal emulator & permissions
 # -----------------------------------------------------------------------------
 retro_info "Setting Kitty as default system terminal..."
 if is_command update-alternatives && is_command kitty; then
@@ -197,7 +200,6 @@ if is_command update-alternatives && is_command kitty; then
     update-alternatives --set x-terminal-emulator /usr/bin/kitty >/dev/null 2>&1 || true
 fi
 
-# Set Kitty as the default terminal emulator inside KDE Plasma
 if [[ -n "${TARGET_HOME:-}" && -d "${TARGET_HOME}" ]]; then
     mkdir -p "${TARGET_HOME}/.config" "${SKEL_DIR}/.config"
     for target in "${TARGET_HOME}/.config/kdeglobals" "${SKEL_DIR}/.config/kdeglobals"; do
@@ -213,8 +215,13 @@ KDECONF
     done
 fi
 
+# Make sure all user folder configs are properly owned by the user
+if [[ "${EUID}" -eq 0 && -n "${TARGET_USER:-}" && "${TARGET_USER}" != "root" ]] && id "${TARGET_USER}" &>/dev/null; then
+    [[ -d "${TARGET_HOME}/.config" ]] && chown -R "${TARGET_USER}:${TARGET_USER}" "${TARGET_HOME}/.config" 2>/dev/null || true
+    [[ -d "${TARGET_HOME}/.local" ]] && chown -R "${TARGET_USER}:${TARGET_USER}" "${TARGET_HOME}/.local" 2>/dev/null || true
+fi
+
 retro_info "Configuring hardware and audio permissions for user..."
-# Target both the resolved system user and the fallback live user
 USERS_TO_CONFIGURE=()
 [[ -n "${TARGET_USER:-}" && "${TARGET_USER}" != "root" ]] && USERS_TO_CONFIGURE+=("${TARGET_USER}")
 [[ "${TARGET_USER}" != "retro" ]] && USERS_TO_CONFIGURE+=("retro")
@@ -232,7 +239,6 @@ for u in "${USERS_TO_CONFIGURE[@]}"; do
     fi
 done
 
-# Passwordless sudo for the live session user
 retro_info "Configuring passwordless sudo for live session..."
 mkdir -p /etc/sudoers.d
 echo "retro ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/retro-live
