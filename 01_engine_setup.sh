@@ -159,7 +159,9 @@ retro_info "Checking root filesystem type for Snapper configuration..."
 if is_btrfs_root; then
     retro_ok "Root filesystem is Btrfs - configuring Snapper rollback support."
 
-    if [[ ! -e /etc/snapper/configs/root ]]; then
+        if [[ ! -e /etc/snapper/configs/root ]]; then
+        umount /.snapshots 2>/dev/null || true
+        rm -rf /.snapshots 2>/dev/null || true
         if snapper -c root create-config / 2>/dev/null; then
             retro_ok "Snapper 'root' config created."
         else
