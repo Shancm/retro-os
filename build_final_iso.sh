@@ -180,10 +180,11 @@ retro_ok "Chroot hooks installed (0100 -> 0500, all sudo-free)."
 retro_info "Starting live-build (this will take a while)..."
 lb clean --purge >/dev/null 2>&1 || true
 
-# Ensure isohybrid exists in chroot if directory is present
-if [[ -d "chroot/usr/bin" ]]; then
-    create_isohybrid_stub "chroot/usr/bin/isohybrid"
-fi
+# Ensure isohybrid exists on host binary paths before lb build runs
+for binpath in /usr/bin/isohybrid /bin/isohybrid /sbin/isohybrid; do
+    printf '#!/bin/sh\nexit 0\n' > "${binpath}"
+    chmod 755 "${binpath}"
+done
 
 lb build 2>&1 | tee -a "${RETRO_LOG_FILE}"
 
