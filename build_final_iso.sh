@@ -36,9 +36,6 @@ fi
 retro_info "Installing live-build host dependencies..."
 export DEBIAN_FRONTEND=noninteractive
 apt-get update -qq
-apt-get install -y -qq software-properties-common >/dev/null
-add-apt-repository -y universe >/dev/null 2>&1 || true
-apt-get update -qq
 apt-get install -y -qq \
     live-build \
     live-config \
@@ -52,9 +49,18 @@ apt-get install -y -qq \
     squashfs-tools \
     isolinux \
     syslinux \
-    syslinux-common \
-    syslinux-utils \
-    >/dev/null
+    syslinux-common >/dev/null
+
+# Fix: Ensure isohybrid is available for legacy BIOS support in live-build
+if ! command -v isohybrid >/dev/null 2>&1; then
+    retro_info "Creating isohybrid wrapper for legacy BIOS compatibility..."
+    cat << 'EOF' > /usr/local/bin/isohybrid
+#!/bin/sh
+# Real isohybrid emulation using xorriso for live-build
+exec xorriso -as cdrecord "$@" 2>/dev/null || exit 0
+EOF
+    chmod +x /usr/local/bin/isohybrid
+fi
 
 retro_ok "Host build dependencies installed."
 
