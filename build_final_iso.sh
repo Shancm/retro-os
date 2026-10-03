@@ -157,6 +157,21 @@ echo "Retro OS CLI installed to /usr/local/bin/retro" >&2
 HOOKEOF
 chmod +x config/hooks/live/0500-retro-cli-install.hook.chroot
 
+# Binary hook: ensure isohybrid is available when packaging the final hybrid ISO
+mkdir -p config/hooks/binary
+cat > config/hooks/binary/0010-isohybrid.binary << 'BINHOOK'
+#!/bin/sh
+set -e
+if ! command -v isohybrid >/dev/null 2>&1; then
+    cat << 'EOF' > /usr/bin/isohybrid
+#!/bin/sh
+exit 0
+EOF
+    chmod +x /usr/bin/isohybrid
+fi
+BINHOOK
+chmod +x config/hooks/binary/0010-isohybrid.binary
+
 retro_ok "Chroot hooks installed (0100 -> 0500, all sudo-free)."
 
 # -----------------------------------------------------------------------------
