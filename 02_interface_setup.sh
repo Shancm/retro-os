@@ -230,8 +230,12 @@ fi
 
 # Final single-pass recursive ownership fix for the target user directory
 if [[ "${EUID}" -eq 0 && -n "${TARGET_USER:-}" && "${TARGET_USER}" != "root" ]] && id "${TARGET_USER}" &>/dev/null; then
-    [[ -d "${TARGET_HOME}/.config" ]] && chown -R "${TARGET_USER}:${TARGET_USER}" "${TARGET_HOME}/.config" 2>/dev/null || true
-    [[ -d "${TARGET_HOME}/.local" ]] && chown -R "${TARGET_USER}:${TARGET_USER}" "${TARGET_HOME}/.local" 2>/dev/null || true
+    if [[ -d "${TARGET_HOME}/.config" ]]; then
+        chown -R "${TARGET_USER}:${TARGET_USER}" "${TARGET_HOME}/.config" 2>/dev/null || true
+    fi
+    if [[ -d "${TARGET_HOME}/.local" ]]; then
+        chown -R "${TARGET_USER}:${TARGET_USER}" "${TARGET_HOME}/.local" 2>/dev/null || true
+    fi
 fi
 
 retro_info "Configuring hardware and audio permissions for user..."
