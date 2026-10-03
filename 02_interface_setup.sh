@@ -75,9 +75,10 @@ deploy_config() {
     mkdir -p "$(dirname "${user_target}")"
     cp -a "${skel_target}" "${user_target}"
 
-    # Fix ownership for user
+    # Recursively fix ownership for both files and created parent directories
     if [[ "${EUID}" -eq 0 && "${TARGET_USER}" != "root" ]] && id "${TARGET_USER}" &>/dev/null; then
-        chown "${TARGET_USER}:${TARGET_USER}" "${user_target}" 2>/dev/null || true
+        [[ -d "${TARGET_HOME}/.config" ]] && chown -R "${TARGET_USER}:${TARGET_USER}" "${TARGET_HOME}/.config" 2>/dev/null || true
+        [[ -d "${TARGET_HOME}/.local" ]] && chown -R "${TARGET_USER}:${TARGET_USER}" "${TARGET_HOME}/.local" 2>/dev/null || true
     fi
 }
 
@@ -168,6 +169,13 @@ if is_command update-desktop-database; then
     fi
 fi
 
+# Refresh KDE Sycoca application cache if available
+if is_command kbuildsycoca6; then
+    kbuildsycoca6 --noincremental >/dev/null 2>&1 || true
+elif is_command kbuildsycoca5; then
+    kbuildsycoca5 --noincremental >/dev/null 2>&1 || true
+fi
+
 retro_ok "Keybindings and launchers deployed."
 
 # -----------------------------------------------------------------------------
@@ -215,7 +223,7 @@ KDECONF
     done
 fi
 
-# Make sure all user folder configs are properly owned by the user
+# Final sweeping ownership fix for all directories and files
 if [[ "${EUID}" -eq 0 && -n "${TARGET_USER:-}" && "${TARGET_USER}" != "root" ]] && id "${TARGET_USER}" &>/dev/null; then
     [[ -d "${TARGET_HOME}/.config" ]] && chown -R "${TARGET_USER}:${TARGET_USER}" "${TARGET_HOME}/.config" 2>/dev/null || true
     [[ -d "${TARGET_HOME}/.local" ]] && chown -R "${TARGET_USER}:${TARGET_USER}" "${TARGET_HOME}/.local" 2>/dev/null || true
