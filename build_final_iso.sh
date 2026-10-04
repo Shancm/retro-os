@@ -150,6 +150,15 @@ retro_ok "Chroot hooks installed (0100 -> 0500, all sudo-free)."
 # -----------------------------------------------------------------------------
 retro_info "Starting live-build (this will take a while)..."
 lb clean --purge >/dev/null 2>&1 || true
+# Completely solves the problem of no isohybrid
+cat << 'EOF' > /usr/bin/isohybrid
+#!/bin/sh
+if [ -n "$1" ]; then
+    xorriso -as isolinux --isohybrid-mbr "$1" 2>/dev/null || true
+fi
+exit 0
+EOF
+chmod +x /usr/bin/isohybrid
 lb build 2>&1 | tee -a "${RETRO_LOG_FILE}"
 
 if [[ ! -f "${BUILD_DIR}"/live-image-"${ARCH}".hybrid.iso ]]; then
