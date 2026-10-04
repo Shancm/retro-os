@@ -49,42 +49,10 @@ apt-get install -y -qq \
     squashfs-tools \
     isolinux \
     syslinux \
-    syslinux-common >/dev/null
+    syslinux-common \
+    syslinux-utils >/dev/null
 
-    # Global isohybrid fallback binary to satisfy binary.sh
-for p in /usr/bin/isohybrid /bin/isohybrid /usr/local/bin/isohybrid; do
-    cat << 'EOF' > "${p}"
-#!/bin/sh
-exit 0
-EOF
-    chmod 755 "${p}"
-done
-
-# Fix: Ensure isohybrid is available for legacy BIOS support in live-build
-if ! command -v isohybrid >/dev/null 2>&1; then
-    retro_info "Creating isohybrid wrapper for legacy BIOS compatibility..."
-    cat << 'EOF' > /usr/local/bin/isohybrid
-#!/bin/sh
-# Real isohybrid emulation using xorriso for live-build
-exec xorriso -as cdrecord "$@" 2>/dev/null || exit 0
-EOF
-    chmod +x /usr/local/bin/isohybrid
-fi
-
-retro_ok "Host build dependencies installed."
-
-create_isohybrid_stub() {
-    local target_path="$1"
-    cat << 'EOF' > "${target_path}"
-#!/bin/sh
-exit 0
-EOF
-    chmod +x "${target_path}"
-}
-
-create_isohybrid_stub "/usr/bin/isohybrid"
-create_isohybrid_stub "/usr/local/bin/isohybrid"
-create_isohybrid_stub "/bin/isohybrid"
+    retro_ok "Host build dependencies installed."
 
 # -----------------------------------------------------------------------------
 # 2. Fresh build tree
@@ -162,13 +130,7 @@ mkdir -p config/hooks/binary
 cat > config/hooks/binary/0010-isohybrid.binary << 'BINHOOK'
 #!/bin/sh
 set -e
-if ! command -v isohybrid >/dev/null 2>&1; then
-    cat << 'EOF' > /usr/bin/isohybrid
-#!/bin/sh
-exit 0
-EOF
-    chmod +x /usr/bin/isohybrid
-fi
+command -v isohybrid >/dev/null 2>&1 || true
 BINHOOK
 chmod +x config/hooks/binary/0010-isohybrid.binary
 
@@ -179,17 +141,6 @@ retro_ok "Chroot hooks installed (0100 -> 0500, all sudo-free)."
 # -----------------------------------------------------------------------------
 retro_info "Starting live-build (this will take a while)..."
 lb clean --purge >/dev/null 2>&1 || true
-
-# Ensure isohybrid exists on BOTH host and inside chroot
-mkdir -p config/includes.chroot/usr/bin config/includes.chroot/bin
-for binpath in /usr/bin/isohybrid /bin/isohybrid config/includes.chroot/usr/bin/isohybrid config/includes.chroot/bin/isohybrid; do
-    printf '#!/bin/sh\nexit 0\n' > "${binpath}"
-    chmod 755 "${binpath}"
-done
-
-# Patch live-build binary scripts directly so it never halts on isohybrid
-find /usr/lib/live/build -type f -name 'binary*' -exec sed -i 's/isohybrid /true # isohybrid /g' {} + 2>/dev/null || true
-
 lb build 2>&1 | tee -a "${RETRO_LOG_FILE}"
 
 if [[ ! -f "${BUILD_DIR}"/live-image-"${ARCH}".hybrid.iso ]]; then
