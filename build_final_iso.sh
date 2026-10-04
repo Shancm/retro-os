@@ -130,7 +130,16 @@ mkdir -p config/hooks/binary
 cat > config/hooks/binary/0010-isohybrid.binary << 'BINHOOK'
 #!/bin/sh
 set -e
-command -v isohybrid >/dev/null 2>&1 || true
+if ! command -v isohybrid >/dev/null 2>&1; then
+    cat << 'EOF' > /usr/bin/isohybrid
+#!/bin/sh
+if [ -n "$1" ]; then
+    xorriso -as isolinux --isohybrid-mbr "$1" 2>/dev/null || true
+fi
+exit 0
+EOF
+    chmod +x /usr/bin/isohybrid
+fi
 BINHOOK
 chmod +x config/hooks/binary/0010-isohybrid.binary
 
