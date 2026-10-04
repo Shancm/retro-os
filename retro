@@ -302,19 +302,26 @@ cmd_panic() {
 
 cmd_update() {
     require_root_soft
-    retro_info "Checking for Retro OS v2.0 updates..."
+    retro_info "Checking for Retro OS updates..."
 
-    # Install required runtime dependencies if missing
     apt-get update -qq
     apt-get install -y -qq python3-pyqt6 python3-psutil espeak-ng curl >/dev/null 2>&1 || true
 
     mkdir -p /opt/retro-os/retro-companion
 
-    # Fetch updated CLI script without touching user files in /home
-    curl -fsSL "https://raw.githubusercontent.com/Shancm/retro-os/main/retro" -o /usr/local/bin/retro
-    chmod +x /usr/local/bin/retro
-
-    retro_ok "Retro OS successfully updated to v2.0! User data preserved."
+    local tmp_file="/tmp/retro-new"
+    if curl -fsSL "https://raw.githubusercontent.com/Shancm/retro-os/main/retro" -o "${tmp_file}"; then
+        if head -n 1 "${tmp_file}" | grep -q "bash"; then
+            mv "${tmp_file}" /usr/local/bin/retro
+            chmod +x /usr/local/bin/retro
+            retro_ok "Retro OS successfully updated! User data preserved."
+        else
+            rm -f "${tmp_file}"
+            retro_die "Update verification failed: corrupted download."
+        fi
+    else
+        retro_die "Failed to download update."
+    fi
 }
 
 require_root_soft() {
