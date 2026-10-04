@@ -21,6 +21,8 @@ jobs:
           exit 0
           EOF'
           sudo chmod +x /usr/bin/isohybrid
+          sudo cp -a /usr/bin/isohybrid /bin/isohybrid 2>/dev/null || true
+          sudo cp -a /usr/bin/isohybrid /usr/local/bin/isohybrid 2>/dev/null || true
 
           # Clone repository
           cd /home/runner
@@ -35,7 +37,7 @@ jobs:
           # Start build process
           BUILD_SCRIPT=$(ls | grep -E "build.*iso.*\.sh" | head -n 1)
           echo "Starting Build with: $BUILD_SCRIPT"
-          sudo -E bash "./$BUILD_SCRIPT"
+          sudo env "PATH=$PATH" bash "./$BUILD_SCRIPT"
 
           # Collect build output
           mkdir -p "$GITHUB_WORKSPACE/output"
@@ -45,4 +47,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: Retro-OS-v1.1-ISO
-          
+          path: output/*.iso
