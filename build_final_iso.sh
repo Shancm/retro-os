@@ -151,20 +151,7 @@ retro_ok "Chroot hooks installed (0100 -> 0500, all sudo-free)."
 retro_info "Starting live-build (this will take a while)..."
 lb clean --purge >/dev/null 2>&1 || true
 
-# ഹോസ്റ്റിലും chroot ലും binary.sh ലും isohybrid നിർബന്ധമായും ലഭ്യമാക്കുന്നു
-for bin_dir in /usr/bin /bin /usr/local/bin chroot/usr/bin chroot/bin; do
-    mkdir -p "${bin_dir}" 2>/dev/null || true
-    cat << 'EOF' > "${bin_dir}/isohybrid"
-#!/bin/sh
-if [ -n "$1" ]; then
-    xorriso -as isolinux --isohybrid-mbr "$1" 2>/dev/null || true
-fi
-exit 0
-EOF
-    chmod +x "${bin_dir}/isohybrid" 2>/dev/null || true
-done
-
-# ലൈവ്-ബിൽഡിന്റെ ഇന്റേണൽ ഫയലുകളിലെ ഹാർഡ്കോഡഡ് ഫെയിലിയർ തടയാൻ
+# ലൈവ്-ബിൽഡിന്റെ ഇന്റേണൽ binary_iso സ്ക്രിപ്റ്റിൽ isohybrid ക്രാഷ് ഒഴിവാക്കുന്നു
 sed -i 's/isohybrid /true # isohybrid /g' /usr/lib/live/build/binary* 2>/dev/null || true
 
 # ഇനി യഥാർത്ഥ ബിൽഡ് റൺ ചെയ്യുക
