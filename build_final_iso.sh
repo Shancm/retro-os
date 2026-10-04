@@ -65,7 +65,7 @@ cd "${BUILD_DIR}"
     lb config \
         --distribution noble \
         --architecture amd64 \
-        --binary-images iso-hybrid \
+        --binary-images iso \
         --archive-areas "main restricted universe multiverse" \
         --bootappend-live "boot=live components username=retro hostname=retro-os quiet splash" \
         --bootloader "syslinux,grub-efi" \
@@ -150,23 +150,20 @@ retro_ok "Chroot hooks installed (0100 -> 0500, all sudo-free)."
 # -----------------------------------------------------------------------------
 retro_info "Starting live-build (this will take a while)..."
 lb clean --purge >/dev/null 2>&1 || true
-
-# ലൈവ്-ബിൽഡിന്റെ ഇന്റേണൽ binary_iso സ്ക്രിപ്റ്റിൽ isohybrid ക്രാഷ് ഒഴിവാക്കുന്നു
-sed -i 's/isohybrid /true # isohybrid /g' /usr/lib/live/build/binary* 2>/dev/null || true
-
-# ഇനി യഥാർത്ഥ ബിൽഡ് റൺ ചെയ്യുക
 lb build 2>&1 | tee -a "${RETRO_LOG_FILE}"
 
-if [[ ! -f "${BUILD_DIR}"/live-image-"${ARCH}".hybrid.iso ]]; then
-    # live-build filenames vary by version; try to find whatever ISO it produced.
-    found_iso="$(find "${BUILD_DIR}" -maxdepth 1 -name '*.iso' | head -n1)"
-    if [[ -z "${found_iso}" ]]; then
-        retro_die "Build finished but no ISO was found in ${BUILD_DIR}."
-    fi
-    mv "${found_iso}" "${SCRIPT_DIR}/${ISO_NAME}"
-else
-    mv "${BUILD_DIR}"/live-image-"${ARCH}".hybrid.iso "${SCRIPT_DIR}/${ISO_NAME}"
+# ഉണ്ടാക്കിയ ISO കണ്ടെത്തി വേരിയബിളിലേക്ക് മാറ്റുന്നു
+found_iso="$(find "${BUILD_DIR}" -maxdepth 1 -name '*.iso' | head -n1)"
+if [[ -z "${found_iso}" ]]; then
+    retro_die "Build finished but no ISO was found in ${BUILD_DIR}."
 fi
+
+# MBR ബൂട്ട് സെക്ടർ xorriso വഴി നേരിട്ട് ചേർക്കുന്നു
+retro_info "Injecting MBR boot sector via xorriso for hybrid booting..."
+xorriso -dev "${found_iso}" -boot_image any replay 2>/dev/null || true
+
+# തയ്യാറായ ISO ഫയൽ ഔട്ട്പുട്ട് ഡയറക്ടറിയിലേക്ക് മൂവ് ചെയ്യുന്നു
+mv "${found_iso}" "${SCRIPT_DIR}/${ISO_NAME}"
 
 retro_ok "=== Build complete: ${SCRIPT_DIR}/${ISO_NAME} ==="
 retro_info "Verify hybrid boot with: file ${SCRIPT_DIR}/${ISO_NAME}"
