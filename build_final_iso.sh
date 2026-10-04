@@ -150,18 +150,20 @@ retro_ok "Chroot hooks installed (0100 -> 0500, all sudo-free)."
 # -----------------------------------------------------------------------------
 retro_info "Starting live-build (this will take a while)..."
 lb clean --purge >/dev/null 2>&1 || true
-# Provide working isohybrid in standard paths before lb build runs
-for p in /usr/bin/isohybrid /bin/isohybrid /usr/local/bin/isohybrid; do
-    cat << 'EOF' > "${p}"
+
+# ലൈവ്-ബിൽഡിന്റെ binary.sh പരാജയപ്പെടാതിരിക്കാൻ isohybrid നിർബന്ധമായും ഉണ്ടാക്കുന്നു
+cat << 'EOF' > /usr/bin/isohybrid
 #!/bin/sh
 if [ -n "$1" ]; then
     xorriso -as isolinux --isohybrid-mbr "$1" 2>/dev/null || true
 fi
 exit 0
 EOF
-    chmod +x "${p}"
-done
+chmod +x /usr/bin/isohybrid
+cp -a /usr/bin/isohybrid /bin/isohybrid 2>/dev/null || true
+cp -a /usr/bin/isohybrid /usr/local/bin/isohybrid 2>/dev/null || true
 
+# ഇനി യഥാർത്ഥ ബിൽഡ് റൺ ചെയ്യുക
 lb build 2>&1 | tee -a "${RETRO_LOG_FILE}"
 
 if [[ ! -f "${BUILD_DIR}"/live-image-"${ARCH}".hybrid.iso ]]; then
