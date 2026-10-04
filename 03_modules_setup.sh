@@ -35,7 +35,7 @@ apt-get install -y -qq \
 if apt-cache show distrobox >/dev/null 2>&1; then
     apt-get install -y -qq distrobox >/dev/null
 else
-    curl -kfsSL https://raw.githubusercontent.com/89luca89/distrobox/main/install \
+    curl -fsSL https://raw.githubusercontent.com/89luca89/distrobox/main/install \
         -o /tmp/distrobox-install.sh
     bash /tmp/distrobox-install.sh --prefix /usr/local >/dev/null
     rm -f /tmp/distrobox-install.sh
