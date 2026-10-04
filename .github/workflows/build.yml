@@ -32,7 +32,7 @@ jobs:
           find . -type f -exec dos2unix -q {} + || true
           chmod -R +x .
 
-          # Start build process - ensure PATH is preserved with -i flag
+          # Start build process
           BUILD_SCRIPT=$(ls | grep -E "build.*iso.*\.sh" | head -n 1)
           echo "Starting Build with: $BUILD_SCRIPT"
           sudo -E bash "./$BUILD_SCRIPT"
@@ -41,9 +41,8 @@ jobs:
           mkdir -p "$GITHUB_WORKSPACE/output"
           find . -name "*.iso" -exec mv {} "$GITHUB_WORKSPACE/output/" \; 2>/dev/null || true
 
-           - name: Upload ISO
-             uses: actions/upload-artifact@v4
-             with:
-               name: Retro-OS-v1.1-ISO
-               path: output/*.iso
+      - name: Upload ISO
+        uses: actions/upload-artifact@v4
+        with:
+          name: Retro-OS-v1.1-ISO
           
