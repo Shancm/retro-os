@@ -68,7 +68,7 @@ cd "${BUILD_DIR}"
         --binary-images iso \
         --archive-areas "main restricted universe multiverse" \
         --bootappend-live "boot=live components username=retro hostname=retro-os quiet splash" \
-        --bootloader "syslinux,grub-efi" \
+        --bootloader grub-efi \
         --iso-application "Retro OS" \
         --iso-volume "RETRO_OS" \
         --iso-publisher "Retro OS Project" \
@@ -160,7 +160,7 @@ fi
 
 # MBR ബൂട്ട് സെക്ടർ xorriso വഴി നേരിട്ട് ചേർക്കുന്നു
 retro_info "Injecting MBR boot sector via xorriso for hybrid booting..."
-xorriso -dev "${found_iso}" -boot_image any replay 2>/dev/null || true
+xorriso -dev "${found_iso}" -boot_image grub patch -boot_image any partition_table=on 2>/dev/null || true
 
 # തയ്യാറായ ISO ഫയൽ ഔട്ട്പുട്ട് ഡയറക്ടറിയിലേക്ക് മൂവ് ചെയ്യുന്നു
 mv "${found_iso}" "${SCRIPT_DIR}/${ISO_NAME}"
