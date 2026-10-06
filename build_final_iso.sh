@@ -63,14 +63,18 @@ rm -rf "${BUILD_DIR}"
 mkdir -p "${BUILD_DIR}"
 cd "${BUILD_DIR}"
 
-    lb config \
+        lb config \
         --distribution trixie \
         --architecture amd64 \
         --binary-images iso-hybrid \
         --parent-mirror-bootstrap "http://deb.debian.org/debian/" \
         --parent-mirror-binary "http://deb.debian.org/debian/" \
+        --parent-mirror-chroot-security "http://deb.debian.org/debian-security/" \
+        --parent-mirror-binary-security "http://deb.debian.org/debian-security/" \
         --mirror-bootstrap "http://deb.debian.org/debian/" \
         --mirror-binary "http://deb.debian.org/debian/" \
+        --mirror-chroot-security "http://deb.debian.org/debian-security/" \
+        --mirror-binary-security "http://deb.debian.org/debian-security/" \
         --archive-areas "main contrib non-free non-free-firmware" \
         --bootappend-live "boot=live components username=retro hostname=retro-os quiet splash" \
         --bootloader "syslinux,grub-efi" \
@@ -80,7 +84,7 @@ cd "${BUILD_DIR}"
         --linux-flavours "amd64" \
         --apt-recommends true \
         --cache true
-
+        
 retro_ok "live-build config generated."
 
 # -----------------------------------------------------------------------------
