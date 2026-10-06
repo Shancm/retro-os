@@ -41,6 +41,7 @@ apt-get install -y -qq \
     live-config \
     live-boot \
     debootstrap \
+    debian-archive-keyring \
     grub-efi-amd64-bin \
     grub-pc-bin \
     mtools \
@@ -66,6 +67,10 @@ cd "${BUILD_DIR}"
         --distribution trixie \
         --architecture amd64 \
         --binary-images iso-hybrid \
+        --parent-mirror-bootstrap "http://deb.debian.org/debian/" \
+        --parent-mirror-binary "http://deb.debian.org/debian/" \
+        --mirror-bootstrap "http://deb.debian.org/debian/" \
+        --mirror-binary "http://deb.debian.org/debian/" \
         --archive-areas "main contrib non-free non-free-firmware" \
         --bootappend-live "boot=live components username=retro hostname=retro-os quiet splash" \
         --bootloader "syslinux,grub-efi" \
