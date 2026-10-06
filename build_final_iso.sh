@@ -81,6 +81,7 @@ cd "${BUILD_DIR}"
         --iso-application "Retro OS" \
         --iso-volume "RETRO_OS" \
         --iso-publisher "Retro OS Project" \
+        --linux-packages "linux-image" \
         --linux-flavours "amd64" \
         --apt-recommends true \
         --cache true
