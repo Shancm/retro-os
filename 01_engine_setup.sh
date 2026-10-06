@@ -24,9 +24,11 @@ apt-get update -qq
 apt-get install -y -qq \
     zram-tools \
     earlyoom \
-    linux-tools-common \
     util-linux \
-    procps >/dev/null
+    procps \
+    firmware-linux \
+    firmware-linux-nonfree \
+    firmware-misc-nonfree >/dev/null
 
 retro_ok "Base engine packages installed."
 
