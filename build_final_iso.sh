@@ -18,7 +18,7 @@ source "${SCRIPT_DIR}/config.env"
 trap 'retro_error "build_final_iso.sh failed at line ${LINENO} (exit ${?})."' ERR
 
 BUILD_DIR="${SCRIPT_DIR}/build"
-DISTRO="${RETRO_LB_DISTRO:-noble}"        # Ubuntu 24.04 "noble"
+DISTRO="${RETRO_LB_DISTRO:-trixie}"       # Debian Testing "trixie"
 ARCH="amd64"
 ISO_NAME="retro-os-${RETRO_OS_VERSION}-${ARCH}.iso"
 
@@ -63,16 +63,16 @@ mkdir -p "${BUILD_DIR}"
 cd "${BUILD_DIR}"
 
     lb config \
-        --distribution noble \
+        --distribution trixie \
         --architecture amd64 \
-        --binary-images iso \
-        --archive-areas "main restricted universe multiverse" \
+        --binary-images iso-hybrid \
+        --archive-areas "main contrib non-free non-free-firmware" \
         --bootappend-live "boot=live components username=retro hostname=retro-os quiet splash" \
-        --bootloader grub-efi \
+        --bootloader "syslinux,grub-efi" \
         --iso-application "Retro OS" \
         --iso-volume "RETRO_OS" \
         --iso-publisher "Retro OS Project" \
-        --linux-flavours "generic" \
+        --linux-flavours "amd64" \
         --apt-recommends true \
         --cache true
 
@@ -158,11 +158,7 @@ if [[ -z "${found_iso}" ]]; then
     retro_die "Build finished but no ISO was found in ${BUILD_DIR}."
 fi
 
-# MBR ബൂട്ട് സെക്ടർ xorriso വഴി നേരിട്ട് ചേർക്കുന്നു
-retro_info "Injecting MBR boot sector via xorriso for hybrid booting..."
-xorriso -dev "${found_iso}" -boot_image grub patch -boot_image any partition_table=on 2>/dev/null || true
-
-# തയ്യാറായ ISO ഫയൽ ഔട്ട്പുട്ട് ഡയറക്ടറിയിലേക്ക് മൂവ് ചെയ്യുന്നു
+# ഡെബിയൻ തനിയെ നിർമ്മിച്ച ഹൈബ്രിഡ് ISO മൂവ് ചെയ്യുന്നു
 mv "${found_iso}" "${SCRIPT_DIR}/${ISO_NAME}"
 
 retro_ok "=== Build complete: ${SCRIPT_DIR}/${ISO_NAME} ==="
