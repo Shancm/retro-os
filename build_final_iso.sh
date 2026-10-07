@@ -130,11 +130,13 @@ retro_info "Installing chroot hooks into config/hooks/live/ ..."
 mkdir -p config/hooks/normal
 mkdir -p config/hooks/live
 
-# Copy the whole project (config.env + 01/02/03 + setup_calamares + retro)
-# into the chroot filesystem so hooks can source config.env at build time.
+# Copy the whole project into the chroot filesystem
 cp -a "${SCRIPT_DIR}"/*.sh "${SCRIPT_DIR}/config.env" "${SCRIPT_DIR}/retro" \
     config/includes.chroot/opt/retro-os/ 2>/dev/null || true
-chmod +x config/includes.chroot/opt/retro-os/*.sh config/includes.chroot/opt/retro-os/retro
+
+# ഫയലുകൾ ഉണ്ടെങ്കിൽ മാത്രം പെർമിഷൻ മാറ്റുക
+chmod +x config/includes.chroot/opt/retro-os/*.sh 2>/dev/null || true
+chmod +x config/includes.chroot/opt/retro-os/retro 2>/dev/null || true
 
 write_hook() {
     local hook_name="$1"
