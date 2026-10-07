@@ -64,6 +64,7 @@ mkdir -p "${BUILD_DIR}"
 cd "${BUILD_DIR}"
 
         lb config \
+        --system debian \
         --distribution trixie \
         --architecture amd64 \
         --binary-images iso-hybrid \
