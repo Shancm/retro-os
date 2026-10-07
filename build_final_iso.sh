@@ -63,7 +63,7 @@ rm -rf "${BUILD_DIR}"
 mkdir -p "${BUILD_DIR}"
 cd "${BUILD_DIR}"
 
-        lb config \
+      lb config \
         --system debian \
         --distribution trixie \
         --architecture amd64 \
@@ -78,7 +78,7 @@ cd "${BUILD_DIR}"
         --mirror-binary-security "http://deb.debian.org/debian-security/" \
         --archive-areas "main contrib non-free non-free-firmware" \
         --bootappend-live "boot=live components username=retro hostname=retro-os quiet splash" \
-        --bootloader "syslinux,grub-efi" \
+        --bootloader grub-efi \
         --iso-application "Retro OS" \
         --iso-volume "RETRO_OS" \
         --iso-publisher "Retro OS Project" \
