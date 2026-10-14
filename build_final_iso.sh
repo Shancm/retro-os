@@ -189,20 +189,58 @@ chmod +x config/hooks/binary/0010-isohybrid.binary
 retro_ok "Chroot hooks installed (0100 -> 0500, all sudo-free)."
 
 # -----------------------------------------------------------------------------
-# 4. Build the ISO
+# 4. Bootloader setup & Build
 # -----------------------------------------------------------------------------
-retro_info "Starting live-build (this will take a while)..."
-lb clean --purge >/dev/null 2>&1 || true
+# ആവശ്യമായ ഡയറക്ടറികൾ നിർമ്മിക്കുന്നു
+mkdir -p "${BUILD_DIR}/config/bootloaders/isolinux"
+mkdir -p "${BUILD_DIR}/binary/isolinux"
+mkdir -p "${BUILD_DIR}/binary/boot/isolinux"
+
+# ISOLINUX ബൈനറികളും എല്ലാ COM32 മൊഡ്യൂളുകളും കോപ്പി ചെയ്യുന്നു
+cp -f /usr/lib/ISOLINUX/isolinux.bin "${BUILD_DIR}/binary/isolinux/" 2>/dev/null || true
+cp -f /usr/lib/syslinux/modules/bios/* "${BUILD_DIR}/binary/isolinux/" 2>/dev/null || true
+cp -f /usr/lib/ISOLINUX/isolinux.bin "${BUILD_DIR}/config/bootloaders/isolinux/" 2>/dev/null || true
+cp -f /usr/lib/syslinux/modules/bios/* "${BUILD_DIR}/config/bootloaders/isolinux/" 2>/dev/null || true
+touch "${BUILD_DIR}/binary/isolinux/bootlogo"
+
+# isolinux.cfg കോൺഫിഗറേഷൻ നിർമ്മിക്കുന്നു
+cat << 'EOF' > "${BUILD_DIR}/binary/isolinux/isolinux.cfg"
+UI vesamenu.c32
+PROMPT 0
+TIMEOUT 50
+
+MENU TITLE Retro OS Lite (Legacy BIOS)
+
+LABEL live
+  MENU LABEL Boot Retro OS Lite
+  MENU DEFAULT
+  LINUX /live/vmlinuz
+  INITRD /live/initrd.img
+  APPEND boot=live persistence quiet components
+
+LABEL failsafe
+  MENU LABEL Boot Retro OS Lite (Fail-safe)
+  LINUX /live/vmlinuz
+  INITRD /live/initrd.img
+  APPEND boot=live components memtest noapic noapm nodma nomce nolapic nomodeset nosmp nospectre_v2 nospec_store_bypass_disable
+EOF
+
+# എല്ലാ പാത്തുകളിലേക്കും കോൺഫിഗറേഷൻ ഉറപ്പാക്കുന്നു
+cp -f "${BUILD_DIR}/binary/isolinux/isolinux.cfg" "${BUILD_DIR}/config/bootloaders/isolinux/isolinux.cfg"
+cp -f "${BUILD_DIR}/binary/isolinux/isolinux.cfg" "${BUILD_DIR}/binary/boot/isolinux/isolinux.cfg"
+
+# ISO ബിൽഡ് ചെയ്യുന്നു
+retro_info "Starting live-build..."
 lb build 2>&1 | tee -a "${RETRO_LOG_FILE}"
 
-# ഉണ്ടാക്കിയ ISO കണ്ടെത്തി വേരിയബിളിലേക്ക് മാറ്റുന്നു
 found_iso="$(find "${BUILD_DIR}" -maxdepth 1 -name '*.iso' | head -n1)"
 if [[ -z "${found_iso}" ]]; then
     retro_die "Build finished but no ISO was found in ${BUILD_DIR}."
 fi
 
-# ഡെബിയൻ തനിയെ നിർമ്മിച്ച ഹൈബ്രിഡ് ISO മൂവ് ചെയ്യുന്നു
-mv "${found_iso}" "${SCRIPT_DIR}/${ISO_NAME}"
+# Puppy Linux മോഡൽ MBR ടേബിൾ ഇൻജക്റ്റ് ചെയ്യുന്നു (Hybrid Boot)
+retro_info "Injecting MBR partition table (isohybrid)..."
+isohybrid "${found_iso}" || true
 
+mv "${found_iso}" "${SCRIPT_DIR}/${ISO_NAME}"
 retro_ok "=== Build complete: ${SCRIPT_DIR}/${ISO_NAME} ==="
-retro_info "Verify hybrid boot with: file ${SCRIPT_DIR}/${ISO_NAME}"
